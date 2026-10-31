@@ -9,7 +9,7 @@
 
 ## Milestone 1 — desktop shell
 
-After visual selection, implement the approved character and panel; tray access; show/hide; dragging; screen-bound recovery; single instance; and explicit Quit.
+After pet visual selection, first prove a transparent pet window, bottom-lane roaming, pause-on-hover, non-activating animation, click-through outside the cloud, and drag/release behavior. Then add tray access, hide/show, screen-bound recovery, single instance, and Quit. Utilities stay hidden by default.
 
 Done when the app is reachable after hiding, reopening, and changing display configuration. Verify keyboard focus and Windows scaling before adding polish.
 
@@ -35,6 +35,13 @@ Done when the acceptance checklist passes on a normal Windows user account and t
 
 | Scenario | Expected result |
 | --- | --- |
+| Launch | Only a small roaming pet appears above the taskbar |
+| Hover or open tools | Pet stops moving so it can be clicked reliably |
+| Click beside/through transparent pet pixels | Underlying app receives click |
+| Type while pet moves | Keyboard focus stays in the working app |
+| Drag/release | No accidental tool opening; returns to bottom lane |
+| Pause roaming or reduced motion | Travel stops; timer continues |
+| Fullscreen application | Pet hides; timer state survives |
 | Start custom 1-minute timer | Accurate elapsed countdown and one completion |
 | Pause, wait, resume | Paused duration is preserved |
 | Reset a running timer | Stops and returns to selected duration |

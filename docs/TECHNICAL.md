@@ -41,6 +41,10 @@ Runtime data, logs containing user task text, and local backups must be excluded
 
 ## Desktop behavior
 
+The default UI is a small transparent, borderless, non-activating pet window, not a fullscreen overlay or a persistent utility panel. Add a PetBehavior service with bounded movement, animation states, and priorities described in [DESKTOP-PET.md](DESKTOP-PET.md). Keep its clock independent from the productivity timer.
+
+Prototype cross-process click-through around transparent pixels on Windows before committing to a rendering technique; WPF element hit-testing alone is not evidence that clicks reach another app. Show utilities in a separate focusable popup only on explicit request. Keep the first roaming lane on the primary monitor; fullscreen hiding and monitor/DPI recovery require real Windows checks.
+
 Register a configurable global hotkey and handle conflicts gracefully. Tray access remains the fallback. Unregister the shortcut and dispose of tray resources on Quit.
 
 Clamp saved positions to current monitor work areas; handle DPI scaling and disconnected displays. Ensure transparent-window hit testing does not block clicks outside the visible character. Test focus, dragging, and screen-reader labels. Suspend decorative animation when hidden and honor reduced motion.

@@ -4,7 +4,7 @@ Planning draft · 2026-10-31
 
 ## Purpose
 
-A small, friendly companion that sits on the Windows desktop and helps with two everyday actions: remembering a task and timing a short session. It should feel cute, calm, and easy to dismiss.
+A small, friendly cloud pet that roams along the bottom of the Windows desktop, above the taskbar. The pet is the default experience; timer and tasks are tucked behind a click. It should feel alive, calm, and easy to dismiss. See [desktop-pet specification](DESKTOP-PET.md) for the researched behavior and implementation priorities.
 
 The earlier idea was a desktop pet connected to Google Search AI. This version keeps the companion interface and deliberately starts with local utilities. Google integration is a separate future decision, not a dependency or promise for this release.
 
@@ -18,7 +18,7 @@ Primary success: open the panel, add a task or start a timer, and return to work
 
 | Area | Included |
 | --- | --- |
-| Companion | One character, draggable position, click to open panel, hide character |
+| Companion | One roaming cloud, idle/drift/nap/drag/celebrate states, pause roaming, click for tools, hide |
 | Timer | One countdown; 5, 15, 25 minute presets; custom whole minutes from 1 to 180 |
 | Timer controls | Start, pause, resume, reset; reset returns to the selected duration |
 | Completion | Visible finished state, one gentle optional sound, tray indication |
@@ -34,11 +34,11 @@ No chat, voice, web search, recurring tasks, task due dates, subtasks, calendar,
 
 ### Opening boi_1
 
-First launch shows the character near the bottom-right, inside the usable screen area, with a short hint: “Click me for your timer and tasks.” No onboarding wizard or login.
+First launch shows only the cloud near the bottom-right, just above the taskbar, with a brief hint: “Click me for your timer and tasks.” It then drifts left and right with quiet pauses. No permanent panel, onboarding wizard, or login.
 
 Click opens a small anchored panel. Click again or press Escape to hide it. The timer continues while the panel is hidden. Closing the panel hides it; only Quit stops the process. The tray menu provides Open, Show/hide character, and Quit.
 
-Dragging the character moves it without opening the panel. Save its position after dragging; keep the panel and character reachable when displays change. Do not take keyboard focus just to animate or announce completion.
+Hover pauses travel. Opening tools also pauses travel so their anchor stays put. Dragging moves the pet without opening tools; release gently returns it to the bottom lane on the primary monitor. Save its horizontal home position. Do not take keyboard focus just to animate or announce completion.
 
 ### Timer
 
@@ -64,12 +64,9 @@ Character and panel must be designed together. Desired feel: cute, soft, legible
 
 Panel information order: app name and hide/settings access; Timer and Tasks tabs; the current tool; compact running-timer status when viewing Tasks. Keep a running timer visible even on the other tab.
 
-No final mascot, palette, or typography is selected. For the next design pass, generate exactly three visual alternatives:
-1. Soft little blob — rounded, warm, minimal.
-2. Tiny desk robot — friendly, tidy, slightly mechanical.
-3. Sleepy forest creature — cozy, gentle, organic.
+The direction is now a roaming cloud buddy. The earlier three panel-heavy mockups were rejected and are not implementation targets. Explore three pet-focused appearances in desktop context, with no large utility panel. Keep the cloud small and show its relationship to the taskbar. Final artwork and animation remain to be selected.
 
-These are directions for exploration, not completed mockups. Show all three with the same timer and task content so the choice is about visual style. Choose one before app scaffolding. This planning repository does not imply visual approval.
+Choose the pet appearance before app scaffolding. Utility popup styling follows the selected pet later; it must not dominate the design.
 
 Use clear text labels, visible keyboard focus, adequate contrast, and controls large enough to click easily. All actions must work by keyboard. Reduced motion disables decorative movement. Sound must be optional and never be the only completion cue. Do not communicate state with color alone.
 
@@ -77,12 +74,12 @@ Use clear text labels, visible keyboard focus, adequate contrast, and controls l
 
 - Offline, local data, no telemetry or background network calls.
 - Startup with Windows: not enabled or added in v0.1.
-- Always-on-top: off by default, user can enable it.
+- Pet overlay: above ordinary windows by default, without activation; hide during fullscreen use. Tool popup appears only on request. Users can hide the pet at any time.
 - Reduced motion: follow Windows preference where available, plus manual override.
 - Sound: gentle and on initially, with a plainly visible mute setting.
 - Suggested shortcut: Ctrl+Alt+B, only if Windows allows registration; conflict must leave tray access available.
 - One application instance.
-- Basic character states only: idle, timing, finished. No pet simulation.
+- Character states: idle, drift left/right, nap, dragged, celebrate. Hover and popup visibility pause travel. Timer status is separate. No hunger, health, or pet-care simulation.
 
 ## Definition of a useful first release
 

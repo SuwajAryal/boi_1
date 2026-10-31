@@ -4,13 +4,13 @@ A little desktop buddy for getting small things done.
 
 **Status: planning — no runnable app yet.**
 
-boi_1 will be a cute Windows companion with a timer and a simple to-do list. Click its character to open a compact panel, or hide it near the Windows clock.
+boi_1 will be a little cloud pet roaming along the bottom of the Windows desktop, above the taskbar. It wanders, blinks, rests, and naps. No panel is visible by default. Click the pet for a timer or simple to-do list; close the popup and the pet stays.
 
 ## First version
 
 - One countdown timer with start, pause, resume, reset, and a gentle completion alert.
 - One to-do list with add, edit, complete, reopen, delete, and undo.
-- A movable desktop character, tray access, and a show/hide shortcut.
+- A roaming cloud pet with idle, drift, nap, drag, and celebration animations; tray access and a show/hide shortcut.
 - Local saving, optional sound, and reduced motion.
 
 Works offline. No account, subscription, AI model, browser automation, or cloud sync is planned for v0.1.
@@ -20,8 +20,10 @@ Works offline. No account, subscription, AI model, browser automation, or cloud 
 - [Product and design plan](docs/PLAN.md)
 - [Implementation approach](docs/TECHNICAL.md)
 - [Milestones and release checklist](docs/ROADMAP.md)
+- [Desktop-pet research and behavior specification](docs/DESKTOP-PET.md)
+- [Credits and reuse record](CREDITS.md)
 
-Next: review the scope, explore three visual directions, and choose the character and panel style before implementing.
+Next: choose the roaming pet's appearance, then prove its transparent desktop window, movement, and click behavior before adding utilities.
 
 ## Development
 
