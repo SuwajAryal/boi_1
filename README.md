@@ -4,7 +4,7 @@ A cream-tabby anime cat for keeping you company and getting small things done.
 
 **Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
 
-Selected mascot: the original cream tabby, restored after the cat was rejected. There are 8 idle frames, 12 walk/hop frames, and 16 reaction frames. Elapsed-time playback and shared scale/ground anchors reduce jitter. Static-pose rotation and artificial bobbing are removed. Generated drawings still have some shape drift; this is a test animation, not a hand-polished production cycle.
+Selected mascot: the original cream tabby, restored after the bunny was rejected. There are 8 idle frames, 12 walking frames, and 16 reaction frames. Elapsed-time playback and shared scale/ground anchors reduce jitter. Static-pose rotation and artificial bobbing are removed. Generated drawings still have some shape drift; this is a test animation, not a hand-polished production cycle.
 
 Roaming and drag-release recovery stay in the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane/animation tests total 36. Alternative packs were researched but not imported; generated cat assets follow the selected template.
 
