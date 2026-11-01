@@ -10,6 +10,7 @@ namespace Boi {
   public Clip(string atlas,int start,int count,double fps){Atlas=atlas;Start=start;Count=count;Fps=fps;}
  }
  public static class CatAnimation {
+  public const bool WalkCycleVerified=false;
   public static readonly string[] States={"Idle","Walking","Curious","Goofing","Enjoying","Serious","Sleepy","Celebrating","Dragged","Surprised","Confused","Proud","Yawning","Stretching","Shy","Grumpy","Affectionate"};
   public static Clip Get(string state){
    if(state=="Walking")return new Clip("walk",0,12,12);

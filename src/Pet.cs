@@ -127,7 +127,7 @@ namespace Boi {
    else if(Clock.State==ClockState.Running)next="Serious";
    else if(tools||Data.PauseRoaming||Data.ReducedMotion)next="Idle";
    else if(now-lastInteraction>90)next="Sleepy";
-   else if(now>=decisionAt){int choice=random.Next(20);next=choice<8?"Walking":choice<13?"Idle":choice<15?"Goofing":choice<17?"Enjoying":choice==17?"Stretching":choice==18?"Yawning":"Confused";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
+   else if(now>=decisionAt){int choice=random.Next(20);next=choice<8?(CatAnimation.WalkCycleVerified?"Walking":"Idle"):choice<13?"Idle":choice<15?"Goofing":choice<17?"Enjoying":choice==17?"Stretching":choice==18?"Yawning":"Confused";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
    activity=next;
    if(next=="Walking"&&!hovering&&!tools&&!Data.PauseRoaming&&!Data.ReducedMotion){x+=direction*26*dt;var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);if(x<min||x>max){direction=-direction;x=Math.Max(min,Math.Min(max,x));}Location=new Point((int)x,a.Bottom-Height-3);}
    if(!dragging&&Math.Abs(Top-(Screen.PrimaryScreen.WorkingArea.Bottom-Height-3))>1){int target=Screen.PrimaryScreen.WorkingArea.Bottom-Height-3;Top+=(int)((target-Top)*.2);if(Math.Abs(target-Top)<6)Top=target;}
@@ -145,6 +145,7 @@ namespace Boi {
   }
   Bitmap RenderFrame(string state){if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}return RenderFrame(state,uptime.Elapsed.TotalSeconds-animationStart);}
   Bitmap RenderFrame(string state,double seconds){
+   if(state=="Walking"&&!CatAnimation.WalkCycleVerified)state="Idle";
    Clip clip=CatAnimation.Get(state);Atlas atlas=clip.Atlas=="walk"?walk:clip.Atlas=="reactions"?expressions:clip.Atlas=="classic"?classic:clip.Atlas=="extra"?extra:idle;
    Bitmap src=atlas.Frames[clip.Start+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)];
    var b=new Bitmap(Width,Height,PixelFormat.Format32bppArgb);using(var g=Graphics.FromImage(b)){

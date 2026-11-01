@@ -27,7 +27,7 @@ namespace Boi {
    Setting(sc,"Gentle timer sound",pet.Data.Sound,b=>pet.Data.Sound=b);
    Setting(sc,"Reduced motion",pet.Data.ReducedMotion,b=>pet.Data.ReducedMotion=b);
    Setting(sc,"Pause roaming",pet.Data.PauseRoaming,b=>pet.Data.PauseRoaming=b);
-   AddLabel(sc,"Try an expression",11,32);var reactions=new FlowLayoutPanel{Width=330,Height=260};foreach(string name in CatAnimation.States){string reaction=name;var b=Btn(name,100);b.Click+=(s,e)=>pet.React(reaction);reactions.Controls.Add(b);}sc.Controls.Add(reactions);
+   AddLabel(sc,"Try an expression",11,32);var reactions=new FlowLayoutPanel{Width=330,Height=260};foreach(string name in CatAnimation.States){string reaction=name;var b=Btn(name,100);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;b.Click+=(s,e)=>pet.React(reaction);reactions.Controls.Add(b);}sc.Controls.Add(reactions);
    var hide=Btn("Hide cat",150);hide.Click+=(s,e)=>pet.ToggleHidden();var quit=Btn("Quit boi_1",150);quit.Click+=(s,e)=>pet.Quit();var actions=new FlowLayoutPanel{Width=330,Height=44};actions.Controls.Add(hide);actions.Controls.Add(quit);sc.Controls.Add(actions);
    AddLabel(sc,"Ctrl + Alt + B opens tools.\nRight-click the cat for quick controls.\nYour tasks stay on this computer.",9,65);
    var credits=new LinkLabel{Text="Open-source inspirations & credits",AutoSize=true,LinkColor=ink};credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");sc.Controls.Add(credits);

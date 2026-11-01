@@ -4,6 +4,8 @@ A cream-tabby anime cat for keeping you company and getting small things done.
 
 **Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
 
+Current correction: walking is temporarily disabled in new builds after the owner reported incorrect leg placement. The gait is not fixed yet. Idle and other expressions remain available. Three cloud-themed popup designs await selection before implementation; see docs/CLOUD-UI-REVISION.md. Older running builds are unchanged.
+
 Selected mascot: the original cream tabby, restored after the bunny was rejected. There are 8 idle frames, 12 walking frames, and 16 reaction frames. Elapsed-time playback and shared scale/ground anchors reduce jitter. Static-pose rotation and artificial bobbing are removed. Generated drawings still have some shape drift; this is a test animation, not a hand-polished production cycle.
 
 Roaming and drag-release recovery stay in the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane/animation tests total 36. Alternative packs were researched but not imported; generated cat assets follow the selected template.

@@ -1,5 +1,9 @@
 # Design QA — first native build, 2026-11-01
 
+## Current user-reported blocker
+
+User rejected walking leg placement. Current walk sheet has inconsistent paw phases; a newly generated candidate is not sufficiently reliable either. Walking is disabled in the next test build while preserving idle/expressions. This is a mitigation, not a passed gait correction. Cloud-themed popup concepts await owner selection; none is implemented yet. See docs/CLOUD-UI-REVISION.md. Overall acceptance remains blocked.
+
 ## Latest enhanced-cat build — supersedes bunny selection
 
 The user returned to the original cat. Current source truth is assets/selected-cat-reference.png. Current native renderer evidence is dist/cat/preview/{Idle,Walking,Surprised,...}/000.png and corresponding GIFs, with native-form evidence under dist/evidence/. Reference, rendered idle, rendered walk and surprised pose were opened together in a single comparison input. The 144x144 physical pet window retains the cream-tabby identity at150% Windows scale. Initial clipped idle/walk/extra atlases were rejected; padded revisions have contained sprites and full tails. Rendering uses common scale and bottom anchoring and caches unchanged frames. The soft cream/orange/pink palette and anime face remain; generated tiny motion marks and modest shape drift are residual polish, not a claim of perfect in-between animation.
