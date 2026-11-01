@@ -10,7 +10,7 @@ Three publicly linked sample characters, in displayed sample order:
 
 1. Blonde chibi in blue dress: https://spritedx.com/p/09859d52-8285-4d22-9501-48758c568047/transparent_idle.webp
 2. Cat-ear chibi in black outfit: https://spritedx.com/p/544acd30-5445-473f-98be-352ad296ec0c/transparent_idle.webp
-3. Brown-haired chibi in dark dress: https://spritedx.com/p/42e98547-591d-4d9c-a125-d47c10ed43b0/transparent_idle.webp
+3. Purple-haired chibi in dark dress: https://spritedx.com/p/42e98547-591d-4d9c-a125-d47c10ed43b0/transparent_idle.webp
 
 These are external previews. No SpriteDX assets or code have yet been copied into the application or repository. On selection, retain source ID, full license and author attribution, inspect the downloadable pack's provenance and manifest, decode the actual frame timing, and preserve consistent scale and ground anchor across frames. Do not replace a real frame cycle with rotation of one static pose. Rendering refresh and animation frame timing should be independent; reduced motion and hidden-state suspension remain supported.
 
@@ -21,3 +21,4 @@ These are external previews. No SpriteDX assets or code have yet been copied int
 - [Paws & Whiskers](https://netherzapdos.itch.io/paws-whiskers-isometric-cats-pack): page lists redistribution restrictions and free-pack noncommercial limits. Not imported.
 
 A generated 16-frame cream-tabby atlas was also explored locally, but is unselected and has continuity/clipping issues. It is not integrated or published as a smooth replacement.
+
