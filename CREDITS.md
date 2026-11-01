@@ -1,5 +1,9 @@
 # Credits and reuse record
 
+## Selected bunny assets — 2026-11-01
+
+Owner chose bunny option 1 after reviewing bunny/fox/hamster concepts. Reference: assets/selected-bunny-reference.png. Built-in Image Gen produced original sprite atlases from that reference: bunny-idle.png (8 frames,4x2), bunny-walk.png (12 frames,4x3), bunny-reactions-v2.png (16 frames,4x4; curious/enjoying/goofing/celebrating rows). Build copies padded reactions as bunny-reactions.png. Prompt briefs requested consistent proportions, soft 2D anime linework, cream fur, floppy pink-lined ears, brown sleepy eyes, pastel shading, sequential poses and transparent margins. No external character assets were imported. Runtime removes negligible alpha noise and normalizes common scale/bottom anchors; preview GIFs encode native renderer outputs. Older cat artwork below is historical and not included in the bunny package.
+
 2026-11-01 animation research: kndlt / SpriteDX's [Free Animated Character Sprites](https://kndlt.itch.io/spritedx-character-sprites) provides the external chibi previews shortlisted in docs/ANIMATION-OPTIONS.md. Creator states CC0 for character assets and MIT for offline preview code. No assets or code from that pack have been imported yet. Full provenance and license will be retained if selected.
 
 boi_1 learns from existing desktop-pet projects. Thank you to their authors and contributors.

@@ -1,22 +1,22 @@
 # boi_1
 
-A little desktop buddy for getting small things done.
+A floppy-eared anime bunny for keeping you company and getting small things done.
 
 **Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
 
-boi_1 is a cream-tabby cat with a soft 2D anime look, designed to stroll along the desktop above the taskbar. Click for a timer or task list; dismiss the tools and the cat stays.
+Selected mascot: cream-white bunny, option 1. There are 8 idle frames, 12 walk/hop frames, and 16 reaction frames. Elapsed-time playback and shared scale/ground anchors reduce jitter. Static-pose rotation and artificial bobbing are removed. Generated drawings still have some shape drift; this is a test animation, not a hand-polished production cycle.
 
-Movement update: roaming and drag-release recovery are now bounded to the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane tests total 16. A smoother replacement character animation is awaiting the owner's choice; current art is retained until then. See [animation shortlist](docs/ANIMATION-OPTIONS.md).
+Roaming and drag-release recovery stay in the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane/animation tests total 19. Alternative packs were researched but not imported; generated bunny assets follow the selected template.
 
 ## Run the test build
 
-Run `./build.ps1` in PowerShell, then open `dist/boi_1.exe`. Keep the assets folder beside it. Requires Windows with .NET Framework 4.8. Uses Windows' built-in compiler; no modern SDK or browser engine is needed.
+Run `./build.ps1` in PowerShell, then open `dist/bunny/boi_1.exe`. Keep its assets folder beside it. Quit older boi_1 versions from their tray first. Requires Windows with .NET Framework 4.8. No modern SDK or browser engine needed. `./package.ps1` creates dist/boi_1-bunny-test.zip.
 
-Click the cat for tools, right-click for quick controls, or use Ctrl+Alt+B. `Open-boi-tools.exe` opens the tools directly. Cat & settings includes nine expression previews, reduced motion, sound, and pause roaming. Quit from the tray or tools; no startup entry is installed.
+Click the bunny for tools, right-click for quick controls, or use Ctrl+Alt+B. `Open-boi-tools.exe` opens tools directly. Bunny & settings includes state previews, reduced motion, sound, and pause roaming. Quit from the tray or tools; no startup entry is installed.
 
-Four walking frames and nine poses support blinking, strolling, goofy wiggling, happy swaying, napping, a serious focusing pose, a drag pose, and a celebration hop. These are sprite animations, not a full skeletal rig or pet-care simulation.
+Frame sequences: idle/blink, walking/hopping, curious, enjoying, goofing, and celebrating. Focus uses calm idle; resting uses a closed-eye frame; dragging uses curious. Those are fallback mappings, not bespoke sleep/drag/focus cycles. Reduced motion freezes frames and roaming.
 
-Run `./test.ps1` for 13 core checks. `dist/boi_1.exe --smoke-test` exercises native forms with isolated synthetic data and writes rendered evidence under evidence/. It does not prove real desktop click-through, dragging, focus, fullscreen transitions, hotkey delivery, or sleep/wake. See [QA status](design-qa.md). This is an unsigned test build, not a production release.
+Run `./test.ps1` for 19 checks. `dist/bunny/boi_1.exe --smoke-test` uses isolated data and writes evidence under dist/evidence/. `--render-preview` exports PNG loops under dist/bunny/preview/; tests/export_preview.py optionally encodes GIFs with Pillow. These do not prove desktop click-through, dragging, focus, fullscreen transitions, hotkeys or sleep/wake. See [QA status](design-qa.md). Unsigned test build, not a production release.
 
 State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with atomic writes and backup recovery. No telemetry or background network calls are implemented. The credits link opens GitHub only when clicked. Primary monitor only; the initial shortcut is fixed.
 
@@ -24,7 +24,7 @@ State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with ato
 
 - One countdown timer with start, pause, resume, reset, and a gentle completion alert.
 - One to-do list with add, edit, complete, reopen, delete, and undo.
-- A roaming cream tabby with idle, walk, nap, drag, and celebration animations; tray access and a show/hide shortcut.
+- A roaming bunny with frame-by-frame idle, walk and reactions; tray access and a show/hide shortcut.
 - Local saving, optional sound, and reduced motion.
 
 Works offline. No account, subscription, AI model, browser automation, or cloud sync is planned for v0.1.

@@ -1,10 +1,10 @@
 # Desktop-pet research and revised behavior
 
-Research 2026-10-31; implementation update 2026-11-01. No upstream application was installed or run. The owner subsequently selected the cream-tabby anime cat; first native build details and verification status are in README and design-qa.md.
+Research 2026-10-31; implementation update 2026-11-01. No upstream application was installed or run. The owner subsequently selected the floppy-eared anime bunny; first native build details and verification status are in README and design-qa.md.
 
 ## Product decision
 
-boi_1 is a small cream-tabby cat living above the taskbar. The ordinary screen has only the pet, with no permanent window frame, dashboard, card, or timer panel. It drifts along the bottom, pauses, looks around, and naps. Click to open simple tools; dismissing them leaves the pet roaming.
+boi_1 is a small floppy-eared bunny living above the taskbar. The ordinary screen has only the pet, with no permanent window frame, dashboard, card, or timer panel. It drifts along the bottom, pauses, looks around, and naps. Click to open simple tools; dismissing them leaves the pet roaming.
 
 The earlier panel-heavy concepts do not represent the requested product. New concepts should show a small pet on a desktop, not a panel with a decorative pet beside it.
 

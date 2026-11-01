@@ -1,5 +1,13 @@
 # Design QA — first native build, 2026-11-01
 
+## Latest bunny build update
+
+Latest source: assets/selected-bunny-reference.png (1487x1058). Renderer evidence: dist/bunny/preview/{Idle,Walking,Curious,Enjoying,Goofing,Celebrating}/000.png plus loop frames and GIFs. Native tool evidence: dist/evidence/{timer,tasks,settings}.png. Source, idle and walking render were opened together in one comparison input. The 144x144 pet render preserves cream floppy ears, brown anime eyes and pink paws against alpha. Tools inherit prior typography/layout checks; settings now says Bunny. No reference wallpaper is shipped.
+
+All 19 core checks and isolated native-form smoke checks pass. Walking uses12 frames, idle8, reactions4 per state. Proportional cell bounds handle atlas rounding. Shared scale/ground anchors replace per-frame resizing; no static rotation or synthetic bobbing. Some generated body/ear shape drift remains across frames and loops; no perfect hand-animation claim. Focus/rest/drag currently use fallback idle/curious poses.
+
+The previous cat instance remains running and was not forcibly stopped. Preview/smoke modes use separate mutexes and synthetic data. Live bunny desktop capture is not yet obtained; the overall result remains blocked pending the desktop checks below. Close older boi_1 via its tray before opening dist/bunny/boi_1.exe.
+
 final result: blocked
 
 ## Evidence and comparison

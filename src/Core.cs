@@ -5,6 +5,9 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace Boi {
+ public static class FrameTiming {
+  public static int Index(double seconds,int count,double fps,bool reduced){if(count<1||fps<=0)throw new ArgumentOutOfRangeException();return reduced?0:(int)(Math.Max(0,seconds)*fps)%count;}
+ }
  public static class RoamingLane {
   // Lane width includes the whole pet, even on small or offset monitors.
   public static void Bounds(int areaLeft,int areaWidth,int petWidth,out int min,out int max) {

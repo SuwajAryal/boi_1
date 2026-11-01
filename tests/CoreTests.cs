@@ -8,6 +8,7 @@ class CoreTests {
  static void Main(){
   var d=new SaveData();var c=new FocusClock(d);Check(c.Display=="25:00","initial duration");
   int min,max;RoamingLane.Bounds(0,1920,96,out min,out max);Check(min==1632&&max==1824,"rightmost 15 percent includes pet width");
+  Check(FrameTiming.Index(.5,12,12,false)==6,"animation follows elapsed time");Check(FrameTiming.Index(1,12,12,false)==0,"walk loop wraps");Check(FrameTiming.Index(4,8,4,true)==0,"reduced motion freezes frames");
   RoamingLane.Bounds(-1920,1920,144,out min,out max);Check(min==-288&&max==-144,"offset monitor roaming bounds");
   RoamingLane.Bounds(0,400,144,out min,out max);Check(min==256&&max==256,"small screen lane never inverts");
   c.Reset(1);c.Start();Thread.Sleep(100);c.Pause();double remaining=c.Remaining;Thread.Sleep(50);c.Tick();Check(c.State==ClockState.Paused&&c.Remaining==remaining,"pause preserves remaining");

@@ -10,7 +10,7 @@ namespace Boi {
   readonly Color ink=Color.FromArgb(76,58,55), peach=Color.FromArgb(248,218,196);
   public Tools(Pet p){pet=p;Text="boi_1 - a little company";ClientSize=new Size(390,560);MinimumSize=new Size(400,600);MaximumSize=new Size(600,850);StartPosition=FormStartPosition.Manual;BackColor=Color.FromArgb(255,249,240);ForeColor=ink;Font=new Font("Segoe UI",10);ShowInTaskbar=true;KeyPreview=true;AutoScaleMode=AutoScaleMode.Dpi;
    var title=new Label{Text="boi_1",Font=new Font("Segoe UI",21,FontStyle.Bold),Dock=DockStyle.Top,Height=56,Padding=new Padding(18,8,0,0)};Controls.Add(title);
-   tabs=new TabControl{Dock=DockStyle.Fill,Padding=new Point(18,9)};var timer=new TabPage("Timer");var tasks=new TabPage("Tasks");var settings=new TabPage("Cat & settings");tabs.TabPages.AddRange(new[]{timer,tasks,settings});foreach(TabPage page in tabs.TabPages){page.BackColor=BackColor;page.Padding=new Padding(16);}Controls.Add(tabs);tabs.BringToFront();
+   tabs=new TabControl{Dock=DockStyle.Fill,Padding=new Point(18,9)};var timer=new TabPage("Timer");var tasks=new TabPage("Tasks");var settings=new TabPage("Bunny & settings");tabs.TabPages.AddRange(new[]{timer,tasks,settings});foreach(TabPage page in tabs.TabPages){page.BackColor=BackColor;page.Padding=new Padding(16);}Controls.Add(tabs);tabs.BringToFront();
    warning=new Label{Dock=DockStyle.Bottom,Height=48,ForeColor=Color.Firebrick,Padding=new Padding(12,3,12,0),Font=new Font("Segoe UI",8)};Controls.Add(warning);warning.BringToFront();
    var column=Column(timer);AddLabel(column,"One small focus session",11,35);
    time=AddLabel(column,"25:00",46,100);time.Font=new Font("Segoe UI",46,FontStyle.Bold);status=AddLabel(column,"Ready when you are.",10,32);
@@ -23,13 +23,13 @@ namespace Boi {
    done=new CheckBox{Text="Show completed tasks",AutoSize=true,Padding=new Padding(0,4,0,6)};done.CheckedChanged+=(s,e)=>BuildTasks();tc.Controls.Add(done);
    list=new FlowLayoutPanel{Width=330,Height=220,AutoScroll=true,FlowDirection=FlowDirection.TopDown,WrapContents=false};tc.Controls.Add(list);
    undo=Btn("Undo last delete",316);undo.Enabled=false;undo.Click+=(s,e)=>{if(deleted==null)return;pet.Data.Tasks.Insert(Math.Min(deletedAt,pet.Data.Tasks.Count),deleted);deleted=null;undo.Enabled=false;pet.Save();BuildTasks();};tc.Controls.Add(undo);
-   var sc=Column(settings);AddLabel(sc,"A little cat. A little company.",12,40);
+   var sc=Column(settings);AddLabel(sc,"A little bunny. A little company.",12,40);
    Setting(sc,"Gentle timer sound",pet.Data.Sound,b=>pet.Data.Sound=b);
    Setting(sc,"Reduced motion",pet.Data.ReducedMotion,b=>pet.Data.ReducedMotion=b);
    Setting(sc,"Pause roaming",pet.Data.PauseRoaming,b=>pet.Data.PauseRoaming=b);
    AddLabel(sc,"Try an expression",11,32);var reactions=new FlowLayoutPanel{Width=330,Height=132};foreach(string name in new[]{"Idle","Walking","Curious","Goofing","Enjoying","Serious","Sleepy","Celebrating","Dragged"}){string reaction=name;var b=Btn(name,100);b.Click+=(s,e)=>pet.React(reaction);reactions.Controls.Add(b);}sc.Controls.Add(reactions);
-   var hide=Btn("Hide cat",150);hide.Click+=(s,e)=>pet.ToggleHidden();var quit=Btn("Quit boi_1",150);quit.Click+=(s,e)=>pet.Quit();var actions=new FlowLayoutPanel{Width=330,Height=44};actions.Controls.Add(hide);actions.Controls.Add(quit);sc.Controls.Add(actions);
-   AddLabel(sc,"Ctrl + Alt + B opens tools.\nRight-click the cat for quick controls.\nYour tasks stay on this computer.",9,65);
+   var hide=Btn("Hide bunny",150);hide.Click+=(s,e)=>pet.ToggleHidden();var quit=Btn("Quit boi_1",150);quit.Click+=(s,e)=>pet.Quit();var actions=new FlowLayoutPanel{Width=330,Height=44};actions.Controls.Add(hide);actions.Controls.Add(quit);sc.Controls.Add(actions);
+   AddLabel(sc,"Ctrl + Alt + B opens tools.\nRight-click the bunny for quick controls.\nYour tasks stay on this computer.",9,65);
    var credits=new LinkLabel{Text="Open-source inspirations & credits",AutoSize=true,LinkColor=ink};credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");sc.Controls.Add(credits);
    FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();ClearUndo();}};KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){Hide();ClearUndo();e.Handled=true;}};
    var root=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=3,ColumnCount=1,Margin=new Padding(0),Padding=new Padding(0)};root.RowStyles.Add(new RowStyle(SizeType.Absolute,56));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,40));title.Dock=DockStyle.Fill;tabs.Dock=DockStyle.Fill;warning.Dock=DockStyle.Fill;root.Controls.Add(title,0,0);root.Controls.Add(tabs,0,1);root.Controls.Add(warning,0,2);Controls.Add(root);
@@ -61,8 +61,6 @@ namespace Boi {
    task.Title="Water the plant tomorrow";pet.Save();deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;undo.PerformClick();if(!pet.Data.Tasks.Contains(task))throw new Exception("Undo failed");
    SelectPage(2);pet.React("Goofing");if(pet.Status!="Goofing")throw new Exception("Preview failed");pet.Data.ReducedMotion=true;pet.Save();Snapshot(folder,"settings.png");pet.Data.ReducedMotion=false;pet.Save();
   }
-  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start timer";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.Text=pet.Storage.Warning.Length>0?pet.Storage.Warning:pet.Clock.State==ClockState.Running?"Timer running  "+pet.Clock.Display+"  - keeps going when tools close.":"Click the cat for tools. Escape hides this window.";}
+  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start timer";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.Text=pet.Storage.Warning.Length>0?pet.Storage.Warning:pet.Clock.State==ClockState.Running?"Timer running  "+pet.Clock.Display+"  - keeps going when tools close.":"Click the bunny for tools. Escape hides this window.";}
  }
 }
-
-
