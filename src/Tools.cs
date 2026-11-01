@@ -1,66 +1,94 @@
 using System;
 using System.Drawing;
-using System.Linq;
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+
 namespace Boi {
- sealed class Tools : Form {
-  readonly Pet pet; TabControl tabs;Label time,status,warning;Button primary;NumericUpDown minutes;float uiScale=1;
-  FlowLayoutPanel list;TextBox input;Todo deleted;int deletedAt;Button undo;CheckBox done;
-  readonly Color ink=Color.FromArgb(76,58,55), peach=Color.FromArgb(248,218,196);
-  public Tools(Pet p){pet=p;Text="boi_1 - a little company";ClientSize=new Size(390,560);MinimumSize=new Size(400,600);MaximumSize=new Size(600,850);StartPosition=FormStartPosition.Manual;BackColor=Color.FromArgb(255,249,240);ForeColor=ink;Font=new Font("Segoe UI",10);ShowInTaskbar=true;KeyPreview=true;AutoScaleMode=AutoScaleMode.Dpi;
-   var title=new Label{Text="boi_1",Font=new Font("Segoe UI",21,FontStyle.Bold),Dock=DockStyle.Top,Height=56,Padding=new Padding(18,8,0,0)};Controls.Add(title);
-   tabs=new TabControl{Dock=DockStyle.Fill,Padding=new Point(18,9)};var timer=new TabPage("Timer");var tasks=new TabPage("Tasks");var settings=new TabPage("Cat & settings");tabs.TabPages.AddRange(new[]{timer,tasks,settings});foreach(TabPage page in tabs.TabPages){page.BackColor=BackColor;page.Padding=new Padding(16);}Controls.Add(tabs);tabs.BringToFront();
-   warning=new Label{Dock=DockStyle.Bottom,Height=48,ForeColor=Color.Firebrick,Padding=new Padding(12,3,12,0),Font=new Font("Segoe UI",8)};Controls.Add(warning);warning.BringToFront();
-   var column=Column(timer);AddLabel(column,"One small focus session",11,35);
-   time=AddLabel(column,"25:00",46,100);time.Font=new Font("Segoe UI",46,FontStyle.Bold);status=AddLabel(column,"Ready when you are.",10,32);
-   var presets=new FlowLayoutPanel{Width=330,Height=45};foreach(int n in new[]{5,15,25}){int v=n;var b=Btn(n+" min",94);b.Click+=(s,e)=>SetMinutes(v);presets.Controls.Add(b);}column.Controls.Add(presets);
-   var duration=new FlowLayoutPanel{Width=330,Height=42};duration.Controls.Add(new Label{Text="Custom minutes",AutoSize=true,Padding=new Padding(0,8,8,0)});minutes=new NumericUpDown{Minimum=1,Maximum=180,Value=pet.Clock.Minutes,Width=90,AccessibleName="Custom timer minutes"};duration.Controls.Add(minutes);column.Controls.Add(duration);
-   minutes.ValueChanged+=(s,e)=>{if(pet.Clock.State==ClockState.Idle){pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();}};
-   primary=Btn("Start timer",316);primary.Height=45;primary.Click+=(s,e)=>{if(pet.Clock.State==ClockState.Idle)pet.Clock.Start();else if(pet.Clock.State==ClockState.Running)pet.Clock.Pause();else if(pet.Clock.State==ClockState.Paused)pet.Clock.Resume();else{pet.Clock.Reset((int)minutes.Value);pet.React("Enjoying");}pet.Save();RefreshState();};column.Controls.Add(primary);
-   var reset=Btn("Reset",316);reset.Click+=(s,e)=>{pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();};column.Controls.Add(reset);
-   var tc=Column(tasks);var taskHint=AddLabel(tc,"One small thing at a time.",12,36);var entry=new FlowLayoutPanel{Width=330,Height=43};input=new TextBox{Width=237,MaxLength=200,AccessibleName="New task",Margin=new Padding(0,6,5,0)};entry.Controls.Add(input);var add=Btn("Add",70);entry.Controls.Add(add);tc.Controls.Add(entry);add.Click+=(s,e)=>AddTask();input.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){AddTask();e.SuppressKeyPress=true;}};
-   done=new CheckBox{Text="Show completed tasks",AutoSize=true,Padding=new Padding(0,4,0,6)};done.CheckedChanged+=(s,e)=>BuildTasks();tc.Controls.Add(done);
-   list=new FlowLayoutPanel{Width=330,Height=220,AutoScroll=true,FlowDirection=FlowDirection.TopDown,WrapContents=false};tc.Controls.Add(list);
-   undo=Btn("Undo last delete",316);undo.Enabled=false;undo.Click+=(s,e)=>{if(deleted==null)return;pet.Data.Tasks.Insert(Math.Min(deletedAt,pet.Data.Tasks.Count),deleted);deleted=null;undo.Enabled=false;pet.Save();BuildTasks();};tc.Controls.Add(undo);
-   var sc=Column(settings);AddLabel(sc,"A little cat. A little company.",12,40);
-   Setting(sc,"Gentle timer sound",pet.Data.Sound,b=>pet.Data.Sound=b);
-   Setting(sc,"Reduced motion",pet.Data.ReducedMotion,b=>pet.Data.ReducedMotion=b);
-   Setting(sc,"Pause roaming",pet.Data.PauseRoaming,b=>pet.Data.PauseRoaming=b);
-   AddLabel(sc,"Try an expression",11,32);var reactions=new FlowLayoutPanel{Width=330,Height=260};foreach(string name in CatAnimation.States){string reaction=name;var b=Btn(name,100);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;b.Click+=(s,e)=>pet.React(reaction);reactions.Controls.Add(b);}sc.Controls.Add(reactions);
-   var hide=Btn("Hide cat",150);hide.Click+=(s,e)=>pet.ToggleHidden();var quit=Btn("Quit boi_1",150);quit.Click+=(s,e)=>pet.Quit();var actions=new FlowLayoutPanel{Width=330,Height=44};actions.Controls.Add(hide);actions.Controls.Add(quit);sc.Controls.Add(actions);
-   AddLabel(sc,"Ctrl + Alt + B opens tools.\nRight-click the cat for quick controls.\nYour tasks stay on this computer.",9,65);
-   var credits=new LinkLabel{Text="Open-source inspirations & credits",AutoSize=true,LinkColor=ink};credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");sc.Controls.Add(credits);
-   FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();ClearUndo();}};KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){Hide();ClearUndo();e.Handled=true;}};
-   var root=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=3,ColumnCount=1,Margin=new Padding(0),Padding=new Padding(0)};root.RowStyles.Add(new RowStyle(SizeType.Absolute,56));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,40));title.Dock=DockStyle.Fill;tabs.Dock=DockStyle.Fill;warning.Dock=DockStyle.Fill;root.Controls.Add(title,0,0);root.Controls.Add(tabs,0,1);root.Controls.Add(warning,0,2);Controls.Add(root);
-   BuildTasks();RefreshState();AutoScaleDimensions=new SizeF(96,96);PerformAutoScale();using(var g=Graphics.FromHwnd(IntPtr.Zero))uiScale=g.DpiX/96f;MinimumSize=new Size((int)(400*uiScale),(int)(600*uiScale));MaximumSize=new Size((int)(600*uiScale),(int)(850*uiScale));ClientSize=new Size((int)(390*uiScale),(int)(560*uiScale));
+ // These paths style ordinary native controls; all cloud illustration is a raster asset.
+ static class SoftShape {
+  public static GraphicsPath Pill(Rectangle r) {var p=new GraphicsPath();int d=Math.Max(2,Math.Min(r.Height,r.Width)-1);p.AddArc(r.X,r.Y,d,d,90,180);p.AddArc(r.Right-d-1,r.Y,d,d,270,180);p.CloseFigure();return p;}
+ }
+ sealed class CloudButton : Button {
+  public Color Fill=Color.FromArgb(234,244,255),Ink=Color.FromArgb(65,99,150),Edge=Color.FromArgb(214,231,252);
+  public string Glyph="";public Font IconFont;bool over;
+  public CloudButton(){SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;BackColor=Color.Transparent;Cursor=Cursors.Hand;TabStop=true;}
+  protected override void OnMouseEnter(EventArgs e){over=true;Invalidate();base.OnMouseEnter(e);}
+  protected override void OnMouseLeave(EventArgs e){over=false;Invalidate();base.OnMouseLeave(e);}
+  protected override void OnPaintBackground(PaintEventArgs e){var host=FindForm() as Tools;if(host!=null)host.PaintBackdrop(e.Graphics,this);else e.Graphics.Clear(Color.FromArgb(255,252,246));}
+  protected override void OnPaint(PaintEventArgs e){e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;var r=new Rectangle(1,1,Width-2,Height-2);using(var path=SoftShape.Pill(r))using(var brush=new SolidBrush(over?ControlPaint.Light(Fill,.15f):Fill))using(var pen=new Pen(Edge,1.2f)){e.Graphics.FillPath(brush,path);e.Graphics.DrawPath(pen,path);}
+   Color ink=Enabled?Ink:Color.FromArgb(153,168,190);var bounds=ClientRectangle;
+   if(Glyph.Length>0&&IconFont!=null){int iconWidth=Text.Length==0?Width:(int)(IconFont.SizeInPoints*2.3);var iconBounds=Text.Length==0?bounds:new Rectangle(Width/5,0,iconWidth,Height);TextRenderer.DrawText(e.Graphics,Glyph,IconFont,iconBounds,ink,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter);if(Text.Length>0)bounds=new Rectangle(Width/5+iconWidth,0,Width*3/5-iconWidth,Height);}
+   if(Text.Length>0)TextRenderer.DrawText(e.Graphics,Text,Font,bounds,ink,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+   if(Focused)ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(6,6,Width-12,Height-12),Ink,Fill);
   }
-  FlowLayoutPanel Column(Control host){var col=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};host.Controls.Add(col);return col;}
-  Label AddLabel(Control host,string text,float size,int height){var l=new Label{Text=text,Width=320,Height=height,Font=new Font("Segoe UI",size),ForeColor=ink,Margin=new Padding(0,2,0,2)};host.Controls.Add(l);return l;}
-  Button Btn(string text,int width){return new Button{Text=text,Width=width,Height=34,FlatStyle=FlatStyle.Flat,BackColor=peach,ForeColor=ink,Cursor=Cursors.Hand,Margin=new Padding(0,3,6,3),AccessibleName=text};}
-  void Setting(Control c,string title,bool value,Action<bool> update){var b=new CheckBox{Text=title,Checked=value,AutoSize=true,Margin=new Padding(0,5,0,5)};b.CheckedChanged+=(s,e)=>{update(b.Checked);pet.Save();};c.Controls.Add(b);}
+ }
+ sealed class SoftField : Panel {
+  public SoftField(){BackColor=Color.Transparent;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);}
+  protected override void OnPaintBackground(PaintEventArgs e){var host=FindForm() as Tools;if(host!=null)host.PaintBackdrop(e.Graphics,this);else e.Graphics.Clear(Color.FromArgb(255,252,246));}
+  protected override void OnPaint(PaintEventArgs e){e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;using(var p=SoftShape.Pill(new Rectangle(1,1,Width-2,Height-2)))using(var pen=new Pen(Color.FromArgb(207,224,246),1.5f))using(var fill=new SolidBrush(Color.FromArgb(255,253,249))){e.Graphics.FillPath(fill,p);e.Graphics.DrawPath(pen,p);}base.OnPaint(e);}
+ }
+ sealed class Tools : Form {
+  readonly Pet pet;readonly float scale;readonly Bitmap cloud,cloudScaled;readonly PrivateFontCollection icons=new PrivateFontCollection();
+  readonly Color ink=Color.FromArgb(44,70,105),muted=Color.FromArgb(102,128,164),blue=Color.FromArgb(103,171,239),paper=Color.FromArgb(255,252,246);
+  Font iconFont;Panel timerPage,taskPage,settingsPage;CloudButton timerTab,taskTab,gear,primary;Label time,status,warning;NumericUpDown minutes;
+  FlowLayoutPanel list;TextBox input;Todo deleted;int deletedAt;CloudButton undo;CheckBox done;bool dragging;Point dragPoint;int selectedPage;
+  int S(double value){return (int)Math.Round(value*scale);}
+  void Place(Control c,int x,int y,int w,int h){c.SetBounds(S(x),S(y),S(w),S(h));}
+  public Tools(Pet p){pet=p;using(var g=Graphics.FromHwnd(IntPtr.Zero))scale=g.DpiX/96f;Text="boi_1 - cloud tools";FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=true;StartPosition=FormStartPosition.Manual;AutoScaleMode=AutoScaleMode.None;ClientSize=new Size(S(400),S(530));BackColor=paper;ForeColor=ink;Font=new Font("Comic Sans MS",10);KeyPreview=true;DoubleBuffered=true;
+   string assets=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");cloud=new Bitmap(Path.Combine(assets,"cloud-panel.png"));cloudScaled=new Bitmap(cloud,ClientSize);icons.AddFontFile(Path.Combine(assets,"fa-solid-900.ttf"));iconFont=new Font(icons.Families[0],12,FontStyle.Regular);
+   using(var outline=new GraphicsPath()){for(int y=0;y<cloudScaled.Height;y++){int start=-1;for(int x=0;x<=cloudScaled.Width;x++){bool solid=x<cloudScaled.Width&&cloudScaled.GetPixel(x,y).A>200;if(solid&&start<0)start=x;if(!solid&&start>=0){outline.AddRectangle(new Rectangle(start,y,x-start,1));start=-1;}}}Region=new Region(outline);}
+   var title=LabelAt(this,"boi_1",25,FontStyle.Bold,53,48,180,46,ContentAlignment.MiddleLeft);title.ForeColor=Color.FromArgb(73,105,157);
+   gear=ButtonAt(this,"",290,58,33,33,()=>SelectPage(2));gear.Glyph="\uf013";gear.IconFont=iconFont;gear.AccessibleName="Cat and settings";
+   var close=ButtonAt(this,"",330,58,33,33,()=>HideTools());close.Glyph="\uf00d";close.IconFont=iconFont;close.AccessibleName="Hide tools";
+   timerTab=ButtonAt(this,"Timer",47,108,153,40,()=>SelectPage(0));timerTab.Glyph="\uf017";timerTab.IconFont=iconFont;
+   taskTab=ButtonAt(this,"Tasks",200,108,153,40,()=>SelectPage(1));taskTab.Glyph="\uf03a";taskTab.IconFont=iconFont;
+   timerPage=Page();taskPage=Page();settingsPage=Page();settingsPage.Width=S(320);
+   LabelAt(timerPage,"A little time for you",12,FontStyle.Regular,4,10,300,38,ContentAlignment.MiddleCenter);
+   time=LabelAt(timerPage,"25:00",44,FontStyle.Bold,0,64,308,93,ContentAlignment.MiddleCenter);time.Font=new Font("Segoe UI",44,FontStyle.Bold);
+   status=LabelAt(timerPage,"Ready when you are.",8,FontStyle.Regular,0,155,308,22,ContentAlignment.MiddleCenter);
+   int presetX=4;foreach(int n in new[]{5,15,25}){int v=n;ButtonAt(timerPage,n+" min",presetX,180,96,35,()=>SetMinutes(v));presetX+=102;}
+   LabelAt(timerPage,"Custom minutes",9,FontStyle.Regular,15,227,165,31,ContentAlignment.MiddleLeft);
+   var duration=new SoftField();Place(duration,175,225,122,33);timerPage.Controls.Add(duration);minutes=new NumericUpDown{Minimum=1,Maximum=180,Value=pet.Clock.Minutes,BorderStyle=BorderStyle.None,BackColor=Color.FromArgb(255,253,249),ForeColor=ink,AccessibleName="Custom timer minutes",Font=Font};Place(minutes,11,6,101,24);duration.Controls.Add(minutes);
+   minutes.ValueChanged+=(s,e)=>{if(pet.Clock.State==ClockState.Idle){pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();}};
+   primary=ButtonAt(timerPage,"Start timer",1,269,306,40,ToggleTimer);primary.Fill=blue;primary.Edge=Color.FromArgb(86,157,230);primary.Ink=Color.White;primary.Font=new Font("Comic Sans MS",12,FontStyle.Bold);primary.Glyph="\uf04b";primary.IconFont=iconFont;
+   var reset=ButtonAt(timerPage,"Reset",109,314,90,24,()=>{pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();});reset.Fill=paper;reset.Edge=paper;reset.Font=new Font("Comic Sans MS",9);
+   LabelAt(taskPage,"One small thing at a time.",12,FontStyle.Bold,1,8,306,40,ContentAlignment.MiddleLeft);
+   var entry=new SoftField();Place(entry,0,58,238,34);taskPage.Controls.Add(entry);input=new TextBox{BorderStyle=BorderStyle.None,MaxLength=200,BackColor=Color.FromArgb(255,253,249),ForeColor=ink,Font=Font,AccessibleName="New task"};Place(input,12,7,213,24);entry.Controls.Add(input);ButtonAt(taskPage,"Add",245,58,63,34,AddTask);input.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){AddTask();e.SuppressKeyPress=true;}};
+   done=new CheckBox{Text="Show completed tasks",ForeColor=muted,BackColor=Color.Transparent,Font=new Font("Comic Sans MS",9)};Place(done,3,101,300,28);taskPage.Controls.Add(done);done.CheckedChanged+=(s,e)=>BuildTasks();
+   list=new FlowLayoutPanel{FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,BackColor=Color.Transparent};Place(list,0,139,311,164);taskPage.Controls.Add(list);
+   undo=ButtonAt(taskPage,"Undo last delete",72,312,164,30,()=>{if(deleted==null)return;pet.Data.Tasks.Insert(Math.Min(deletedAt,pet.Data.Tasks.Count),deleted);deleted=null;undo.Enabled=false;pet.Save();BuildTasks();});undo.Enabled=false;
+   settingsPage.AutoScroll=true;LabelAt(settingsPage,"A little cat. A little company.",11,FontStyle.Bold,0,4,300,32,ContentAlignment.MiddleLeft);
+   Setting("Gentle timer sound",pet.Data.Sound,42,b=>pet.Data.Sound=b);Setting("Reduced motion",pet.Data.ReducedMotion,73,b=>pet.Data.ReducedMotion=b);Setting("Pause roaming",pet.Data.PauseRoaming,104,b=>pet.Data.PauseRoaming=b);
+   LabelAt(settingsPage,"Try an expression",10,FontStyle.Bold,0,145,300,28,ContentAlignment.MiddleLeft);int i=0;foreach(string name in CatAnimation.States){string reaction=name;var b=ButtonAt(settingsPage,name,(i%3)*101,180+(i/3)*36,95,29,()=>pet.React(reaction));b.Font=new Font("Comic Sans MS",8);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;i++;}
+   ButtonAt(settingsPage,"Hide cat",0,411,144,33,()=>pet.ToggleHidden());ButtonAt(settingsPage,"Quit boi_1",153,411,144,33,()=>pet.Quit());
+   LabelAt(settingsPage,"Ctrl + Alt + B opens tools.\nYour tasks stay on this computer.",8,FontStyle.Regular,0,454,300,46,ContentAlignment.MiddleLeft);
+   var credits=new LinkLabel{Text="Open-source credits",LinkColor=muted,BackColor=Color.Transparent,AutoSize=false,Font=new Font("Comic Sans MS",8)};Place(credits,0,508,300,28);settingsPage.Controls.Add(credits);credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");
+   warning=LabelAt(this,"",7,FontStyle.Regular,55,148,289,14,ContentAlignment.MiddleCenter);
+   MouseDown+=BeginDrag;MouseMove+=MoveDrag;MouseUp+=(s,e)=>dragging=false;title.MouseDown+=BeginDrag;title.MouseMove+=MoveDrag;title.MouseUp+=(s,e)=>dragging=false;
+   FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;HideTools();}};KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){HideTools();e.Handled=true;}};
+   BuildTasks();SelectPage(0);RefreshState();
+  }
+  void BeginDrag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){dragging=true;dragPoint=new Point(Cursor.Position.X-Left,Cursor.Position.Y-Top);}}
+  void MoveDrag(object sender,MouseEventArgs e){if(dragging)Location=new Point(Cursor.Position.X-dragPoint.X,Cursor.Position.Y-dragPoint.Y);}
+  void HideTools(){Hide();deleted=null;undo.Enabled=false;}
+  protected override void OnPaintBackground(PaintEventArgs e){e.Graphics.Clear(paper);e.Graphics.DrawImage(cloud,ClientRectangle);}
+  internal void PaintBackdrop(Graphics g,Control child){g.Clear(paper);Point origin=PointToClient(child.PointToScreen(Point.Empty));g.DrawImage(cloud,new Rectangle(-origin.X,-origin.Y,ClientSize.Width,ClientSize.Height));}
+  Panel Page(){var p=new Panel{BackColor=Color.Transparent};Place(p,46,153,310,348);Controls.Add(p);return p;}
+  Label LabelAt(Control host,string text,float size,FontStyle style,int x,int y,int w,int h,ContentAlignment align){var l=new Label{Text=text,ForeColor=ink,BackColor=Color.Transparent,Font=new Font("Comic Sans MS",size,style),TextAlign=align};Place(l,x,y,w,h);host.Controls.Add(l);return l;}
+  CloudButton ButtonAt(Control host,string text,int x,int y,int w,int h,Action action){var b=new CloudButton{Text=text,Font=new Font("Comic Sans MS",10),AccessibleName=text};Place(b,x,y,w,h);b.Click+=(s,e)=>action();host.Controls.Add(b);return b;}
+  void Setting(string text,bool value,int y,Action<bool> update){var c=new CheckBox{Text=text,Checked=value,ForeColor=ink,BackColor=Color.Transparent,Font=Font};Place(c,3,y,297,28);settingsPage.Controls.Add(c);c.CheckedChanged+=(s,e)=>{update(c.Checked);pet.Save();};}
+  void ToggleTimer(){if(pet.Clock.State==ClockState.Idle)pet.Clock.Start();else if(pet.Clock.State==ClockState.Running)pet.Clock.Pause();else if(pet.Clock.State==ClockState.Paused)pet.Clock.Resume();else{pet.Clock.Reset((int)minutes.Value);pet.React("Enjoying");}pet.Save();RefreshState();}
   void SetMinutes(int value){if(pet.Clock.State!=ClockState.Idle){MessageBox.Show(this,"Reset your current timer to change its duration.","boi_1");return;}minutes.Value=value;}
   void AddTask(){string title=input.Text.Trim();if(title.Length==0){input.Focus();return;}pet.Data.Tasks.Add(new Todo{Title=title});input.Clear();pet.Save();BuildTasks();input.Focus();pet.React("Enjoying");}
-  void ClearUndo(){deleted=null;undo.Enabled=false;}
-  void BuildTasks(){list.SuspendLayout();while(list.Controls.Count>0)list.Controls[0].Dispose();
-   foreach(var item in pet.Data.Tasks.Where(t=>!t.Done||done.Checked).OrderBy(t=>t.Done).ToArray()){
-    Todo task=item;var row=new FlowLayoutPanel{Width=306,Height=64,WrapContents=false,Margin=new Padding(0,2,0,2)};
-    var check=new CheckBox{Checked=task.Done,Width=22,Height=45,AccessibleName="Complete "+task.Title};check.CheckedChanged+=(s,e)=>{task.Done=check.Checked;pet.Save();if(task.Done)pet.React("Celebrating");BeginInvoke((Action)BuildTasks);};row.Controls.Add(check);
-    var label=new Label{Text=task.Title,Width=164,Height=56,Padding=new Padding(0,8,0,0),AutoEllipsis=true,Font=new Font("Segoe UI",10,task.Done?FontStyle.Strikeout:FontStyle.Regular)};new ToolTip().SetToolTip(label,task.Title);row.Controls.Add(label);
-    var edit=Btn("Edit",48);edit.Click+=(s,e)=>{string title=EditTask(task.Title);if(title!=null){task.Title=title;pet.Save();BuildTasks();}};row.Controls.Add(edit);
-    var del=Btn("Del",44);del.AccessibleName="Delete "+task.Title;del.Click+=(s,e)=>{deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;pet.Save();BuildTasks();};row.Controls.Add(del);if(uiScale!=1)row.Scale(new SizeF(uiScale,uiScale));list.Controls.Add(row);
-   }
-   if(list.Controls.Count==0)list.Controls.Add(new Label{Text="No tasks here yet. Add one small thing.",Width=300,Height=60});list.ResumeLayout();
-  }
-  string EditTask(string text){using(var f=new Form{Text="Edit task",ClientSize=new Size(340,105),StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MinimizeBox=false,MaximizeBox=false,BackColor=BackColor}){var box=new TextBox{Text=text,MaxLength=200,Left=12,Top=14,Width=314,AccessibleName="Task title"};var ok=Btn("Save",90);ok.Location=new Point(236,56);ok.Click+=(s,e)=>{if(box.Text.Trim().Length>0)f.DialogResult=DialogResult.OK;};f.Controls.Add(box);f.Controls.Add(ok);f.AcceptButton=ok;return f.ShowDialog(this)==DialogResult.OK?box.Text.Trim():null;}}
-  public void SelectPage(int index){tabs.SelectedIndex=index;}
-  void Snapshot(string folder,string name){Refresh();Application.DoEvents();using(var b=new Bitmap(Width,Height)){DrawToBitmap(b,new Rectangle(0,0,Width,Height));b.Save(Path.Combine(folder,name));}}
-  public void RunSmoke(string folder){
-   pet.Clock.Reset(1);minutes.Value=1;RefreshState();primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Start failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Paused)throw new Exception("Pause failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Resume failed");Snapshot(folder,"timer.png");pet.Clock.Reset(25);minutes.Value=25;pet.Save();
-   SelectPage(1);input.Text="Read a chapter";AddTask();input.Text="Water the plant";AddTask();var task=pet.Data.Tasks.Last();task.Done=true;pet.Save();done.Checked=true;BuildTasks();Snapshot(folder,"tasks.png");
-   task.Title="Water the plant tomorrow";pet.Save();deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;undo.PerformClick();if(!pet.Data.Tasks.Contains(task))throw new Exception("Undo failed");
-   SelectPage(2);pet.React("Goofing");if(pet.Status!="Goofing")throw new Exception("Preview failed");pet.Data.ReducedMotion=true;pet.Save();Snapshot(folder,"settings.png");pet.Data.ReducedMotion=false;pet.Save();
-  }
-  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start timer";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.Text=pet.Storage.Warning.Length>0?pet.Storage.Warning:pet.Clock.State==ClockState.Running?"Timer running  "+pet.Clock.Display+"  - keeps going when tools close.":"Click the cat for tools. Escape hides this window.";}
+  void BuildTasks(){list.SuspendLayout();while(list.Controls.Count>0)list.Controls[0].Dispose();foreach(var item in pet.Data.Tasks.Where(t=>!t.Done||done.Checked).OrderBy(t=>t.Done).ToArray()){Todo task=item;var row=new Panel{Width=S(288),Height=S(58),Margin=new Padding(0,0,0,S(4)),BackColor=Color.Transparent};var check=new CheckBox{Checked=task.Done,AccessibleName="Complete "+task.Title,BackColor=Color.Transparent};Place(check,0,10,23,28);row.Controls.Add(check);check.CheckedChanged+=(s,e)=>{task.Done=check.Checked;pet.Save();if(task.Done)pet.React("Celebrating");BeginInvoke((Action)BuildTasks);};var label=LabelAt(row,task.Title,9,task.Done?FontStyle.Strikeout:FontStyle.Regular,28,0,163,55,ContentAlignment.MiddleLeft);label.AutoEllipsis=true;ButtonAt(row,"Edit",197,12,43,29,()=>{string title=EditTask(task.Title);if(title!=null){task.Title=title;pet.Save();BuildTasks();}}).Font=new Font("Comic Sans MS",8);ButtonAt(row,"Del",245,12,40,29,()=>{deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;pet.Save();BuildTasks();}).Font=new Font("Comic Sans MS",8);list.Controls.Add(row);}if(list.Controls.Count==0){var empty=new Label{Text="One small thing at a time.",Width=S(288),Height=S(60),ForeColor=muted,Font=Font};list.Controls.Add(empty);}list.ResumeLayout();}
+  string EditTask(string text){using(var f=new Form{Text="Edit task",ClientSize=new Size(S(340),S(108)),StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MinimizeBox=false,MaximizeBox=false,BackColor=paper,Font=Font}){var box=new TextBox{Text=text,MaxLength=200,AccessibleName="Task title"};Place(box,12,14,314,27);f.Controls.Add(box);var ok=ButtonAt(f,"Save",230,58,96,33,()=>{if(box.Text.Trim().Length>0)f.DialogResult=DialogResult.OK;});f.AcceptButton=ok;return f.ShowDialog(this)==DialogResult.OK?box.Text.Trim():null;}}
+  public void SelectPage(int index){selectedPage=index;timerPage.Visible=index==0;taskPage.Visible=index==1;settingsPage.Visible=index==2;timerTab.Fill=index==0?Color.FromArgb(206,230,255):Color.FromArgb(250,251,254);taskTab.Fill=index==1?Color.FromArgb(206,230,255):Color.FromArgb(250,251,254);gear.Fill=index==2?Color.FromArgb(206,230,255):Color.FromArgb(234,244,255);timerTab.Invalidate();taskTab.Invalidate();gear.Invalidate();}
+  void Snapshot(string folder,string name){Refresh();Application.DoEvents();using(var b=new Bitmap(Width,Height)){DrawToBitmap(b,new Rectangle(0,0,Width,Height));for(int y=0;y<b.Height;y++)for(int x=0;x<b.Width;x++)if(!Region.IsVisible(x,y))b.SetPixel(x,y,Color.Transparent);b.Save(Path.Combine(folder,name));}}
+  public void RunSmoke(string folder){pet.Clock.Reset(1);minutes.Value=1;RefreshState();primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Start failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Paused)throw new Exception("Pause failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Resume failed");Snapshot(folder,"timer.png");pet.Clock.Reset(25);minutes.Value=25;pet.Save();SelectPage(1);input.Text="Read a chapter";AddTask();input.Text="Water the plant";AddTask();var task=pet.Data.Tasks.Last();task.Done=true;pet.Save();done.Checked=true;BuildTasks();Snapshot(folder,"tasks.png");task.Title="Water the plant tomorrow";pet.Save();deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;undo.PerformClick();if(!pet.Data.Tasks.Contains(task))throw new Exception("Undo failed");SelectPage(2);pet.React("Goofing");if(pet.Status!="Goofing")throw new Exception("Preview failed");pet.Data.ReducedMotion=true;pet.Save();Snapshot(folder,"settings.png");pet.Data.ReducedMotion=false;pet.Save();}
+  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start timer";primary.Glyph=pet.Clock.State==ClockState.Running?"\uf04c":"\uf04b";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.ForeColor=pet.Storage.Warning.Length>0?Color.Firebrick:muted;warning.Text=pet.Storage.Warning.Length>0?pet.Storage.Warning:pet.Clock.State==ClockState.Running?"Timer running "+pet.Clock.Display+" - you can hide this cloud.":"Your little cloud of calm.";}
+  protected override void Dispose(bool disposing){if(disposing){cloud.Dispose();cloudScaled.Dispose();iconFont.Dispose();icons.Dispose();}base.Dispose(disposing);}
  }
 }

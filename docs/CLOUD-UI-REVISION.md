@@ -1,5 +1,7 @@
 # Walking correction and cloud UI — 2026-11-01
 
+Owner selected option1 and explicitly requested changes on main and saved. Blue cloud popup is now implemented in src/Tools.cs using assets/cloud-panel.png, live native controls, and licensed Font Awesome icons. Timer, tasks and settings are connected. See design-qa.md for completed checks and the user-stopped final visual recheck. Walking remains paused.
+
 User reported incorrect leg placement in the walking animation and requested a cute cloud-like tools interface. Cat identity and right-side lane remain unchanged.
 
 ## Walking status

@@ -1,5 +1,11 @@
 # Credits and reuse record
 
+## Blue cloud tools interface — 2026-11-01
+
+The owner selected cloud option1, retained as assets/selected-cloud-ui.png. Built-in Image Gen created assets/cloud-panel.png from that reference: a blank, transparent cloud silhouette with ivory center, pale-blue outline and bottom cloud puffs. Timer, tasks, settings, buttons and labels are live native controls over that artwork, not a flattened screenshot.
+
+Settings, close, clock, list and play/pause icons use Font Awesome Free6.7.2 by Fonticons, Inc. Bundled source: https://github.com/FortAwesome/Font-Awesome/tree/6.7.2 . Font file assets/fa-solid-900.ttf is used under SIL OFL1.1; complete original distribution license retained in assets/licenses/font-awesome.txt and copied into builds. Ordinary button outlines are native control styling. No additional external character artwork was adopted.
+
 ## Enhanced original cat — current selection, 2026-11-01
 
 The owner rejected the bunny build and returned to the original cream tabby in assets/selected-cat-reference.png. That image was the reference for built-in Image Gen to create cat-idle-loop-v2.png (8 frames), cat-walk-loop-v2.png (12 frames), cat-reaction-loops.png (4 rows of4: curious, enjoying, goofing, celebrating), and cat-extra-expressions-v2.png (8 still poses: surprised, confused, proud, yawning, stretching, shy, grumpy, affectionate). Prompts preserve the selected soft 2D anime identity, cream-orange stripes, brown eyes, pink paws and blush, requesting generous transparent gutters and full tails. The padded extra-expression revision shrinks the initial sheet to remove clipping. The earlier cat-expressions-v2.png supplies original focus, nap and picked-up poses. No external character assets were copied. Runtime alpha cleanup, consistent scale/bottom anchors and frame caching support playback; some generated shape drift remains.

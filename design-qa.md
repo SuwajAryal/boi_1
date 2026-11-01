@@ -1,5 +1,15 @@
 # Design QA — first native build, 2026-11-01
 
+## Selected cloud UI implementation — latest
+
+Source truth: assets/selected-cloud-ui.png, first displayed cloud UI option. Raster plate assets/cloud-panel.png supplies the silhouette/decoration; live Windows Forms controls implement the UI. Licensed Font Awesome font supplies icons. Logical viewport400x530; native-form render600x795 at150% scale. Typography uses Comic Sans MS with Segoe UI timer digits; palette is ivory/sky-blue/navy. No standard Windows title bar; hide/settings controls are named accessible buttons and Escape hides the tools.
+
+Comparison input included selected source and latest timer/tasks/settings renders (dist/evidence/*.png). First pass found clipped Reset; lower controls were moved inside silhouette. Input corner backgrounds were fixed. Settings width was increased to remove unintended horizontal scrolling. Long settings content scrolls vertically. Source's decorative puffs are raster artwork; the cat remains a separate desktop pet.
+
+36 core checks and isolated form smoke checks pass. Live Windows accessibility and capture were obtained. Settings navigation and vertical scrolling to Quit/credits worked; Quit closed the app cleanly. Live capture revealed black rectangles behind some rounded controls that did not appear in form renders. Explicit backdrop painting was added and compiled. The user then stopped Computer Use with physical Escape before the revised window could be rechecked. No further UI automation was performed.
+
+Final cloud visual result remains blocked on verifying that backdrop fix. Overall desktop/gait acceptance also remains blocked: walking is disabled, not corrected. The source changes are saved on main as requested, with no claim of completed final visual QA.
+
 ## Current user-reported blocker
 
 User rejected walking leg placement. Current walk sheet has inconsistent paw phases; a newly generated candidate is not sufficiently reliable either. Walking is disabled in the next test build while preserving idle/expressions. This is a mitigation, not a passed gait correction. Cloud-themed popup concepts await owner selection; none is implemented yet. See docs/CLOUD-UI-REVISION.md. Overall acceptance remains blocked.

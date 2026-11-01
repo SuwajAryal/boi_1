@@ -14,5 +14,8 @@ Copy-Item -LiteralPath "$projectRoot/assets/cat-idle-loop-v2.png" -Destination "
 Copy-Item -LiteralPath "$projectRoot/assets/cat-walk-loop-v2.png" -Destination "$outputRoot/assets/cat-walk-loop.png" -Force
 Copy-Item -LiteralPath "$projectRoot/assets/cat-extra-expressions-v2.png" -Destination "$outputRoot/assets/cat-extra-expressions.png" -Force
 Copy-Item -LiteralPath "$projectRoot/assets/cat-expressions-v2.png" -Destination "$outputRoot/assets/cat-expressions.png" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cloud-panel.png","$projectRoot/assets/fa-solid-900.ttf" -Destination "$outputRoot/assets" -Force
+New-Item -ItemType Directory -Force -Path "$outputRoot/assets/licenses" | Out-Null
+Copy-Item -LiteralPath "$projectRoot/assets/licenses/font-awesome.txt" -Destination "$outputRoot/assets/licenses/font-awesome.txt" -Force
 Copy-Item -LiteralPath "$projectRoot/CREDITS.md" -Destination "$outputRoot/CREDITS.md" -Force
 Write-Output "Built $outputRoot/boi_1.exe. Keep its assets folder beside it."

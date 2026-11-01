@@ -1,5 +1,7 @@
 # boi_1
 
+The selected blue cloud tools interface is implemented on main: cloud-shaped popup, rounded blue timer/task tabs and controls, settings icon, close/hide control, and licensed icons. Source and artwork are saved in this repository. Core checks and native-form smoke checks pass. A live-only button-background issue was fixed after inspection, but the user stopped the final visual recheck with Escape; that last verification remains incomplete. Walking remains disabled pending a reliable gait correction.
+
 A cream-tabby anime cat for keeping you company and getting small things done.
 
 **Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
