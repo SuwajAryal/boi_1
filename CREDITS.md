@@ -1,5 +1,7 @@
 # Credits and reuse record
 
+2026-11-01 animation research: kndlt / SpriteDX's [Free Animated Character Sprites](https://kndlt.itch.io/spritedx-character-sprites) provides the external chibi previews shortlisted in docs/ANIMATION-OPTIONS.md. Creator states CC0 for character assets and MIT for offline preview code. No assets or code from that pack have been imported yet. Full provenance and license will be retained if selected.
+
 boi_1 learns from existing desktop-pet projects. Thank you to their authors and contributors.
 
 ## Research and design inspiration

@@ -6,6 +6,8 @@ A little desktop buddy for getting small things done.
 
 boi_1 is a cream-tabby cat with a soft 2D anime look, designed to stroll along the desktop above the taskbar. Click for a timer or task list; dismiss the tools and the cat stays.
 
+Movement update: roaming and drag-release recovery are now bounded to the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane tests total 16. A smoother replacement character animation is awaiting the owner's choice; current art is retained until then. See [animation shortlist](docs/ANIMATION-OPTIONS.md).
+
 ## Run the test build
 
 Run `./build.ps1` in PowerShell, then open `dist/boi_1.exe`. Keep the assets folder beside it. Requires Windows with .NET Framework 4.8. Uses Windows' built-in compiler; no modern SDK or browser engine is needed.

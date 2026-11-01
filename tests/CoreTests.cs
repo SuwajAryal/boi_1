@@ -7,6 +7,9 @@ class CoreTests {
  static void Check(bool value,string name){if(!value)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
  static void Main(){
   var d=new SaveData();var c=new FocusClock(d);Check(c.Display=="25:00","initial duration");
+  int min,max;RoamingLane.Bounds(0,1920,96,out min,out max);Check(min==1632&&max==1824,"rightmost 15 percent includes pet width");
+  RoamingLane.Bounds(-1920,1920,144,out min,out max);Check(min==-288&&max==-144,"offset monitor roaming bounds");
+  RoamingLane.Bounds(0,400,144,out min,out max);Check(min==256&&max==256,"small screen lane never inverts");
   c.Reset(1);c.Start();Thread.Sleep(100);c.Pause();double remaining=c.Remaining;Thread.Sleep(50);c.Tick();Check(c.State==ClockState.Paused&&c.Remaining==remaining,"pause preserves remaining");
   c.Resume();Check(c.State==ClockState.Running,"resume");c.Reset(15);Check(c.State==ClockState.Idle&&c.Remaining==900,"reset");
   var expired=new FocusClock(new SaveData{TimerState=ClockState.Running,DeadlineUtc=DateTime.UtcNow.AddSeconds(-5),Remaining=5});Check(expired.State==ClockState.Finished&&!expired.Tick(),"expired restart is finished once");

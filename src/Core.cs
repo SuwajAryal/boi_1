@@ -5,6 +5,13 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace Boi {
+ public static class RoamingLane {
+  // Lane width includes the whole pet, even on small or offset monitors.
+  public static void Bounds(int areaLeft,int areaWidth,int petWidth,out int min,out int max) {
+   int right=areaLeft+areaWidth;max=Math.Max(areaLeft,right-petWidth);
+   min=Math.Min(max,Math.Max(areaLeft,right-(int)Math.Ceiling(areaWidth*.15)));
+  }
+ }
  public enum ClockState { Idle, Running, Paused, Finished }
  public class Todo { public string Id = Guid.NewGuid().ToString(); public string Title; public bool Done; }
  public class SaveData {

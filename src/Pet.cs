@@ -103,7 +103,7 @@ namespace Boi {
   void OnUp(object s,MouseEventArgs e){if(e.Button==MouseButtons.Right){menu.Show(Cursor.Position);return;}if(e.Button!=MouseButtons.Left)return; down=false;dragging=false;Capture=false;lastInteraction=uptime.Elapsed.TotalSeconds;preview="";
    if(moved){Clamp();Data.HomeX=Left;Save();}else OpenTools(0);
   }
-  void Clamp(){var a=Screen.PrimaryScreen.WorkingArea;x=Math.Max(a.Left,Math.Min(a.Right-Width,x));Location=new Point((int)x,a.Bottom-Height-3);}
+  void Clamp(){var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);x=Math.Max(min,Math.Min(max,x));Location=new Point((int)x,a.Bottom-Height-3);}
   bool IsFullscreen(){var fg=Native.GetForegroundWindow();if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
   void Step(){double now=uptime.Elapsed.TotalSeconds,dt=Math.Min(.1,now-previous);previous=now;
    if(Clock.Tick()){Complete(true);Save();}
@@ -121,7 +121,7 @@ namespace Boi {
    else if(now-lastInteraction>90)next="Sleepy";
    else if(now>=decisionAt){int choice=random.Next(10);next=choice<5?"Walking":choice<8?"Idle":choice==8?"Goofing":"Enjoying";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
    activity=next;
-   if(next=="Walking"&&!hovering&&!tools&&!Data.PauseRoaming&&!Data.ReducedMotion){x+=direction*26*dt;var a=Screen.PrimaryScreen.WorkingArea;if(x<a.Left||x>a.Right-Width){direction=-direction;x=Math.Max(a.Left,Math.Min(a.Right-Width,x));}Location=new Point((int)x,a.Bottom-Height-3);}
+   if(next=="Walking"&&!hovering&&!tools&&!Data.PauseRoaming&&!Data.ReducedMotion){x+=direction*26*dt;var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);if(x<min||x>max){direction=-direction;x=Math.Max(min,Math.Min(max,x));}Location=new Point((int)x,a.Bottom-Height-3);}
    if(!dragging&&Math.Abs(Top-(Screen.PrimaryScreen.WorkingArea.Bottom-Height-3))>1){int target=Screen.PrimaryScreen.WorkingArea.Bottom-Height-3;Top+=(int)((target-Top)*.2);if(Math.Abs(target-Top)<6)Top=target;}
    Render();
   }
