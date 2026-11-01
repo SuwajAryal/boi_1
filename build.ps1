@@ -1,4 +1,4 @@
-param([string]$OutputFolder = 'dist/bunny')
+param([string]$OutputFolder = 'dist/cat')
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
@@ -9,7 +9,10 @@ New-Item -ItemType Directory -Force -Path (Join-Path $outputRoot 'assets') | Out
 if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
 & $compiler /nologo /target:winexe /out:"$outputRoot\Open-boi-tools.exe" "$projectRoot\src\OpenTools.cs"
 if ($LASTEXITCODE -ne 0) { throw 'Tools launcher build failed.' }
-Copy-Item -LiteralPath "$projectRoot/assets/bunny-idle.png","$projectRoot/assets/bunny-walk.png" -Destination "$outputRoot/assets" -Force
-Copy-Item -LiteralPath "$projectRoot/assets/bunny-reactions-v2.png" -Destination "$outputRoot/assets/bunny-reactions.png" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cat-reaction-loops.png" -Destination "$outputRoot/assets" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cat-idle-loop-v2.png" -Destination "$outputRoot/assets/cat-idle-loop.png" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cat-walk-loop-v2.png" -Destination "$outputRoot/assets/cat-walk-loop.png" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cat-extra-expressions-v2.png" -Destination "$outputRoot/assets/cat-extra-expressions.png" -Force
+Copy-Item -LiteralPath "$projectRoot/assets/cat-expressions-v2.png" -Destination "$outputRoot/assets/cat-expressions.png" -Force
 Copy-Item -LiteralPath "$projectRoot/CREDITS.md" -Destination "$outputRoot/CREDITS.md" -Force
 Write-Output "Built $outputRoot/boi_1.exe. Keep its assets folder beside it."

@@ -1,5 +1,9 @@
 # Credits and reuse record
 
+## Enhanced original cat — current selection, 2026-11-01
+
+The owner rejected the bunny build and returned to the original cream tabby in assets/selected-cat-reference.png. That image was the reference for built-in Image Gen to create cat-idle-loop-v2.png (8 frames), cat-walk-loop-v2.png (12 frames), cat-reaction-loops.png (4 rows of4: curious, enjoying, goofing, celebrating), and cat-extra-expressions-v2.png (8 still poses: surprised, confused, proud, yawning, stretching, shy, grumpy, affectionate). Prompts preserve the selected soft 2D anime identity, cream-orange stripes, brown eyes, pink paws and blush, requesting generous transparent gutters and full tails. The padded extra-expression revision shrinks the initial sheet to remove clipping. The earlier cat-expressions-v2.png supplies original focus, nap and picked-up poses. No external character assets were copied. Runtime alpha cleanup, consistent scale/bottom anchors and frame caching support playback; some generated shape drift remains.
+
 ## Selected bunny assets — 2026-11-01
 
 Owner chose bunny option 1 after reviewing bunny/fox/hamster concepts. Reference: assets/selected-bunny-reference.png. Built-in Image Gen produced original sprite atlases from that reference: bunny-idle.png (8 frames,4x2), bunny-walk.png (12 frames,4x3), bunny-reactions-v2.png (16 frames,4x4; curious/enjoying/goofing/celebrating rows). Build copies padded reactions as bunny-reactions.png. Prompt briefs requested consistent proportions, soft 2D anime linework, cream fur, floppy pink-lined ears, brown sleepy eyes, pastel shading, sequential poses and transparent margins. No external character assets were imported. Runtime removes negligible alpha noise and normalizes common scale/bottom anchors; preview GIFs encode native renderer outputs. Older cat artwork below is historical and not included in the bunny package.

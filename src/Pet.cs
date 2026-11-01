@@ -42,7 +42,7 @@ namespace Boi {
      using(var cell=image.Clone(new Rectangle(x0,y0,w,h),PixelFormat.Format32bppArgb)) {
       int left=w,top=h,right=0,bottom=0;
       for(int y=0;y<h;y++)for(int x=0;x<w;x++){var c=cell.GetPixel(x,y);if(c.A<=8)cell.SetPixel(x,y,Color.Transparent);else if(c.A>24){left=Math.Min(left,x);right=Math.Max(right,x);top=Math.Min(top,y);bottom=Math.Max(bottom,y);}}
-      if(left>=right)throw new InvalidDataException("Empty bunny frame in "+path);
+      if(left>=right)throw new InvalidDataException("Empty cat frame in "+path);
       // Runtime alpha bounds remove only empty atlas padding, preserving original raster art.
       Frames[i]=cell.Clone(Rectangle.FromLTRB(left,top,right+1,bottom+1),PixelFormat.Format32bppArgb);
       maxWidth=Math.Max(maxWidth,Frames[i].Width);maxHeight=Math.Max(maxHeight,Frames[i].Height);
@@ -57,19 +57,20 @@ namespace Boi {
   public SaveData Data; public FocusClock Clock; public Store Storage;
   public Tools Tools;
   NotifyIcon tray;ContextMenuStrip menu;
-  System.Windows.Forms.Timer tick;Atlas expressions,walk,idle;
+  System.Windows.Forms.Timer tick;Atlas expressions,walk,idle,classic,extra;
   readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
   double previous,x,decisionAt,playUntil,nextCheck,animationStart;int direction=-1;string activity="Idle",preview="",animationState="";
   bool dragging,down,moved,hidden,full,quitting;Point downCursor,downLocation;
   double lastInteraction; int baseSize;Icon catIcon;
+  Bitmap cachedFrame;string cachedKey="";Point renderedLocation=new Point(int.MinValue,int.MinValue);
   public string Status {get {return preview!=""?preview:activity;}}
   protected override bool ShowWithoutActivation { get {return true;} }
   protected override CreateParams CreateParams {get {var p=base.CreateParams;p.ExStyle|=0x80000|0x80|0x08000000;return p;}}
   public Pet(bool openTools) {
-   Text="boi_1 - desktop bunny";FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;StartPosition=FormStartPosition.Manual;
+   Text="boi_1 - desktop cat";FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;StartPosition=FormStartPosition.Manual;
    Storage=new Store((Program.SmokeTest||Program.PreviewOnly)?Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"smoke-data"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"boi_1"));Data=(Program.SmokeTest||Program.PreviewOnly)?new SaveData():Storage.Load();Clock=new FocusClock(Data);
    string folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");
-   expressions=new Atlas(Path.Combine(folder,"bunny-reactions.png"),4,4);walk=new Atlas(Path.Combine(folder,"bunny-walk.png"),4,3);idle=new Atlas(Path.Combine(folder,"bunny-idle.png"),4,2);
+   expressions=new Atlas(Path.Combine(folder,"cat-reaction-loops.png"),4,4);walk=new Atlas(Path.Combine(folder,"cat-walk-loop.png"),4,3);idle=new Atlas(Path.Combine(folder,"cat-idle-loop.png"),4,2);classic=new Atlas(Path.Combine(folder,"cat-expressions.png"),3,3);extra=new Atlas(Path.Combine(folder,"cat-extra-expressions.png"),4,2);
    Program.Trace("Art loaded");
    using(var g=Graphics.FromHwnd(IntPtr.Zero))baseSize=(int)(96*g.DpiX/96);
    Size=new Size(baseSize,baseSize);var area=Screen.PrimaryScreen.WorkingArea;
@@ -77,7 +78,7 @@ namespace Boi {
    menu=new ContextMenuStrip(); menu.Items.Add("Timer",null,(s,e)=>OpenTools(0));menu.Items.Add("To-do list",null,(s,e)=>OpenTools(1));
    menu.Items.Add("Expressions & settings",null,(s,e)=>OpenTools(2));menu.Items.Add(new ToolStripSeparator());
    menu.Items.Add("Pause / resume roaming",null,(s,e)=>{Data.PauseRoaming=!Data.PauseRoaming;Save();});
-   menu.Items.Add("Show / hide bunny",null,(s,e)=>ToggleHidden());menu.Items.Add("Quit boi_1",null,(s,e)=>Quit());
+   menu.Items.Add("Show / hide cat",null,(s,e)=>ToggleHidden());menu.Items.Add("Quit boi_1",null,(s,e)=>Quit());
    tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true,ContextMenuStrip=menu};
    using(var tiny=new Bitmap(idle.Frames[0],32,32)){IntPtr handle=tiny.GetHicon();using(var icon=Icon.FromHandle(handle))catIcon=(Icon)icon.Clone();Native.DestroyIcon(handle);}tray.Icon=catIcon;
    tray.MouseClick+=(s,e)=>{if(e.Button==MouseButtons.Left)OpenTools(0);};
@@ -94,7 +95,7 @@ namespace Boi {
    FormClosing+=(s,e)=>{if(!quitting&&e.CloseReason==CloseReason.UserClosing){e.Cancel=true;ToggleHidden();}else if(!Program.PreviewOnly)Save();};
    Program.Trace("Constructed");
   }
-  void RunPreview(){string root=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"preview");Directory.CreateDirectory(root);foreach(string state in new[]{"Idle","Walking","Curious","Enjoying","Goofing","Celebrating"}){string folder=Path.Combine(root,state);Directory.CreateDirectory(folder);for(int i=0;i<36;i++)using(var b=RenderFrame(state,i/18.0))b.Save(Path.Combine(folder,i.ToString("000")+".png"),ImageFormat.Png);}quitting=true;Close();}
+  void RunPreview(){string root=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"preview");Directory.CreateDirectory(root);foreach(string state in CatAnimation.States){string folder=Path.Combine(root,state);Directory.CreateDirectory(folder);for(int i=0;i<36;i++)using(var b=RenderFrame(state,i/18.0))b.Save(Path.Combine(folder,i.ToString("000")+".png"),ImageFormat.Png);}quitting=true;Close();}
   void RunSmoke(){
    string folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"..","evidence");Directory.CreateDirectory(folder);
    try {Tools.RunSmoke(folder);using(var b=RenderFrame("Idle"))b.Save(Path.Combine(folder,"pet-idle.png"),ImageFormat.Png);
@@ -126,7 +127,7 @@ namespace Boi {
    else if(Clock.State==ClockState.Running)next="Serious";
    else if(tools||Data.PauseRoaming||Data.ReducedMotion)next="Idle";
    else if(now-lastInteraction>90)next="Sleepy";
-   else if(now>=decisionAt){int choice=random.Next(10);next=choice<5?"Walking":choice<8?"Idle":choice==8?"Goofing":"Enjoying";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
+   else if(now>=decisionAt){int choice=random.Next(20);next=choice<8?"Walking":choice<13?"Idle":choice<15?"Goofing":choice<17?"Enjoying":choice==17?"Stretching":choice==18?"Yawning":"Confused";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
    activity=next;
    if(next=="Walking"&&!hovering&&!tools&&!Data.PauseRoaming&&!Data.ReducedMotion){x+=direction*26*dt;var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);if(x<min||x>max){direction=-direction;x=Math.Max(min,Math.Min(max,x));}Location=new Point((int)x,a.Bottom-Height-3);}
    if(!dragging&&Math.Abs(Top-(Screen.PrimaryScreen.WorkingArea.Bottom-Height-3))>1){int target=Screen.PrimaryScreen.WorkingArea.Bottom-Height-3;Top+=(int)((target-Top)*.2);if(Math.Abs(target-Top)<6)Top=target;}
@@ -138,13 +139,14 @@ namespace Boi {
   public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);var a=Screen.PrimaryScreen.WorkingArea;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,Left+Width-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
   public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();Show();Render();} }
   public void Quit(){if(Clock.State==ClockState.Running&&MessageBox.Show("Your timer will be saved, but cannot alert while boi_1 is closed. Quit?","boi_1",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;Save();quitting=true;Close();}
-  void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;using(var b=RenderFrame(state))Native.Present(Handle,b,Location);}
+  void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}double seconds=uptime.Elapsed.TotalSeconds-animationStart;Clip clip=CatAnimation.Get(state);string key=state+":"+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)+":"+direction+":"+Width+":"+Height;bool changed=key!=cachedKey;
+   if(changed){if(cachedFrame!=null)cachedFrame.Dispose();cachedFrame=RenderFrame(state,seconds);cachedKey=key;}
+   if(changed||Location!=renderedLocation){Native.Present(Handle,cachedFrame,Location);renderedLocation=Location;}
+  }
   Bitmap RenderFrame(string state){if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}return RenderFrame(state,uptime.Elapsed.TotalSeconds-animationStart);}
   Bitmap RenderFrame(string state,double seconds){
-   Bitmap src;
-   if(state=="Walking")src=walk.Frames[FrameTiming.Index(seconds,12,12,Data.ReducedMotion)];
-   else if(state=="Curious"||state=="Dragged"||state=="Enjoying"||state=="Goofing"||state=="Celebrating") {int row=(state=="Curious"||state=="Dragged")?0:state=="Enjoying"?1:state=="Goofing"?2:3;src=expressions.Frames[row*4+FrameTiming.Index(seconds,4,5,Data.ReducedMotion)];}
-   else src=idle.Frames[state=="Sleepy"?3:FrameTiming.Index(seconds,8,4,Data.ReducedMotion)];
+   Clip clip=CatAnimation.Get(state);Atlas atlas=clip.Atlas=="walk"?walk:clip.Atlas=="reactions"?expressions:clip.Atlas=="classic"?classic:clip.Atlas=="extra"?extra:idle;
+   Bitmap src=atlas.Frames[clip.Start+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)];
    var b=new Bitmap(Width,Height,PixelFormat.Format32bppArgb);using(var g=Graphics.FromImage(b)){
     g.Clear(Color.Transparent);g.InterpolationMode=InterpolationMode.HighQualityBicubic;g.SmoothingMode=SmoothingMode.AntiAlias;
     float w=Width*.88f,h=Height*.88f;float scale=Math.Min(w/src.Width,h/src.Height);w=src.Width*scale;h=src.Height*scale;
@@ -152,6 +154,6 @@ namespace Boi {
    }
    return b;
   }
-  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
+  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
  }
 }

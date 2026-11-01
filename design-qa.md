@@ -1,5 +1,11 @@
 # Design QA — first native build, 2026-11-01
 
+## Latest enhanced-cat build — supersedes bunny selection
+
+The user returned to the original cat. Current source truth is assets/selected-cat-reference.png. Current native renderer evidence is dist/cat/preview/{Idle,Walking,Surprised,...}/000.png and corresponding GIFs, with native-form evidence under dist/evidence/. Reference, rendered idle, rendered walk and surprised pose were opened together in a single comparison input. The 144x144 physical pet window retains the cream-tabby identity at150% Windows scale. Initial clipped idle/walk/extra atlases were rejected; padded revisions have contained sprites and full tails. Rendering uses common scale and bottom anchoring and caches unchanged frames. The soft cream/orange/pink palette and anime face remain; generated tiny motion marks and modest shape drift are residual polish, not a claim of perfect in-between animation.
+
+There are17 states: six dedicated frame sequences, three original focus/nap/drag poses, and eight new still expressions. All36 core timing/storage/lane/clip-mapping checks pass, and isolated native-form smoke checks pass. More expressions are available through the scrollable Cat & settings panel. Desktop roaming remains in the rightmost15%, including recovery after dragging. The prior app was not forcibly stopped. Live integration checks below remain outstanding; final result stays blocked for production acceptance. The enhanced cat is delivered as a test build under dist/cat/.
+
 ## Latest bunny build update
 
 Latest source: assets/selected-bunny-reference.png (1487x1058). Renderer evidence: dist/bunny/preview/{Idle,Walking,Curious,Enjoying,Goofing,Celebrating}/000.png plus loop frames and GIFs. Native tool evidence: dist/evidence/{timer,tasks,settings}.png. Source, idle and walking render were opened together in one comparison input. The 144x144 pet render preserves cream floppy ears, brown anime eyes and pink paws against alpha. Tools inherit prior typography/layout checks; settings now says Bunny. No reference wallpaper is shipped.

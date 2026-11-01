@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / '.tools' / 'pillow'
 from PIL import Image
 
 root = Path(__file__).resolve().parents[1]
-preview = root / 'dist' / 'bunny' / 'preview'
+preview = root / 'dist' / 'cat' / 'preview'
 for folder in preview.iterdir():
     if not folder.is_dir():
         continue

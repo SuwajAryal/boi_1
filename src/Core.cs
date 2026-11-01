@@ -5,6 +5,24 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace Boi {
+ public sealed class Clip {
+  public string Atlas;public int Start,Count;public double Fps;
+  public Clip(string atlas,int start,int count,double fps){Atlas=atlas;Start=start;Count=count;Fps=fps;}
+ }
+ public static class CatAnimation {
+  public static readonly string[] States={"Idle","Walking","Curious","Goofing","Enjoying","Serious","Sleepy","Celebrating","Dragged","Surprised","Confused","Proud","Yawning","Stretching","Shy","Grumpy","Affectionate"};
+  public static Clip Get(string state){
+   if(state=="Walking")return new Clip("walk",0,12,12);
+   int row=state=="Curious"?0:state=="Enjoying"?1:state=="Goofing"?2:state=="Celebrating"?3:-1;
+   if(row>=0)return new Clip("reactions",row*4,4,5);
+   string[] extras={"Surprised","Confused","Proud","Yawning","Stretching","Shy","Grumpy","Affectionate"};
+   int extra=Array.IndexOf(extras,state);if(extra>=0)return new Clip("extra",extra,1,1);
+   if(state=="Serious")return new Clip("classic",2,1,1);
+   if(state=="Sleepy")return new Clip("classic",4,1,1);
+   if(state=="Dragged")return new Clip("classic",6,1,1);
+   return new Clip("idle",0,8,4);
+  }
+ }
  public static class FrameTiming {
   public static int Index(double seconds,int count,double fps,bool reduced){if(count<1||fps<=0)throw new ArgumentOutOfRangeException();return reduced?0:(int)(Math.Max(0,seconds)*fps)%count;}
  }

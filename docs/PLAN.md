@@ -1,10 +1,10 @@
 # boi_1 — product and design plan
 
-Plan updated · 2026-11-01. Selected mascot: floppy-eared bunny, option 1 of the bunny/fox/hamster set. A first native test build now exists; see README and design-qa.md for implemented behavior and outstanding live checks. The build uses Windows Forms/native layering rather than the original WPF proposal.
+Plan updated · 2026-11-01. Selected mascot: cream-tabby cat, the original cat restored after rejecting the bunny. A first native test build now exists; see README and design-qa.md for implemented behavior and outstanding live checks. The build uses Windows Forms/native layering rather than the original WPF proposal.
 
 ## Purpose
 
-A small, friendly floppy-eared bunny that roams along the bottom of the Windows desktop, above the taskbar. The pet is the default experience; timer and tasks are tucked behind a click. It should feel alive, calm, and easy to dismiss. See [desktop-pet specification](DESKTOP-PET.md) for the researched behavior and implementation priorities.
+A small, friendly cream-tabby cat that roams along the bottom of the Windows desktop, above the taskbar. The pet is the default experience; timer and tasks are tucked behind a click. It should feel alive, calm, and easy to dismiss. See [desktop-pet specification](DESKTOP-PET.md) for the researched behavior and implementation priorities.
 
 The earlier idea was a desktop pet connected to Google Search AI. This version keeps the companion interface and deliberately starts with local utilities. Google integration is a separate future decision, not a dependency or promise for this release.
 
@@ -64,7 +64,7 @@ Character and panel must be designed together. Desired feel: cute, soft, legible
 
 Panel information order: app name and hide/settings access; Timer and Tasks tabs; the current tool; compact running-timer status when viewing Tasks. Keep a running timer visible even on the other tab.
 
-The owner selected the floppy-eared bunny in the soft 2D anime style. Cloud concepts and panel-heavy concepts were rejected. Keep the bunny small and free on the desktop. The first sprite atlases are generated and source art is retained in assets/.
+The owner selected the cream-tabby cat in the soft 2D anime style. Cloud concepts and panel-heavy concepts were rejected. Keep the bunny small and free on the desktop. The first sprite atlases are generated and source art is retained in assets/.
 
 Choose the pet appearance before app scaffolding. Utility popup styling follows the selected pet later; it must not dominate the design.
 
