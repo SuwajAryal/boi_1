@@ -1,0 +1,148 @@
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Windows.Forms;
+using System.Diagnostics;
+using System.Threading;
+
+namespace Boi {
+ static class Program {
+  internal static bool Diagnostics;
+  internal static bool SmokeTest;
+  internal static readonly EventWaitHandle ShowRequest=new EventWaitHandle(false,EventResetMode.AutoReset,"Local\\boi_1.open-tools.v1");
+  internal static void Trace(string text){if(Diagnostics)File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"startup.log"),text+Environment.NewLine);}
+  internal static readonly uint Wake=Native.RegisterWindowMessage("boi_1.show-tools.v1");
+  [STAThread] static void Main(string[] args) {
+   bool diagnostic=Array.IndexOf(args,"--diagnostics")>=0;
+   Diagnostics=diagnostic;
+   SmokeTest=Array.IndexOf(args,"--smoke-test")>=0;
+   if(diagnostic)File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"startup.log"),"Start "+DateTime.UtcNow+Environment.NewLine);
+   Native.SetProcessDPIAware(); bool first;
+   using(var mutex=new Mutex(true,"Local\\boi_1.desktop.v1",out first)) {
+    if(diagnostic)File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"startup.log"),"First instance: "+first+Environment.NewLine);
+    if(!first){ShowRequest.Set();return;}
+    Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
+    try { Application.Run(new Pet(Array.IndexOf(args,"--tools")>=0||SmokeTest)); }
+    catch(Exception ex) {MessageBox.Show("boi_1 could not start.\n"+ex.Message,"boi_1",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+   }
+  }
+ }
+ sealed class Atlas : IDisposable {
+  public Bitmap[] Frames;
+  public Atlas(string path,int cols,int rows) {
+   using(var image=new Bitmap(path)) {
+    Frames=new Bitmap[cols*rows]; int w=image.Width/cols,h=image.Height/rows;
+    for(int i=0;i<Frames.Length;i++) {
+     using(var cell=image.Clone(new Rectangle((i%cols)*w,(i/cols)*h,w,h),PixelFormat.Format32bppArgb)) {
+      int left=w,top=h,right=0,bottom=0;
+      for(int y=0;y<h;y++)for(int x=0;x<w;x++){var c=cell.GetPixel(x,y);if(c.A<=8)cell.SetPixel(x,y,Color.Transparent);else if(c.A>24){left=Math.Min(left,x);right=Math.Max(right,x);top=Math.Min(top,y);bottom=Math.Max(bottom,y);}}
+      if(left>=right)throw new InvalidDataException("Empty cat frame in "+path);
+      // Runtime alpha bounds remove only empty atlas padding, preserving original raster art.
+      Frames[i]=cell.Clone(Rectangle.FromLTRB(left,top,right+1,bottom+1),PixelFormat.Format32bppArgb);
+     }
+    }
+   }
+  }
+  public void Dispose(){foreach(var f in Frames)f.Dispose();}
+ }
+ sealed class Pet : Form {
+  public SaveData Data; public FocusClock Clock; public Store Storage;
+  public Tools Tools;
+  NotifyIcon tray;ContextMenuStrip menu;
+  System.Windows.Forms.Timer tick;Atlas expressions,walk;
+  readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
+  double previous,x,decisionAt,playUntil;int direction=-1;string activity="Idle",preview="";
+  bool dragging,down,moved,hidden,full,quitting;Point downCursor,downLocation;
+  double lastInteraction; int frameCounter,baseSize;Icon catIcon;
+  public string Status {get {return preview!=""?preview:activity;}}
+  protected override bool ShowWithoutActivation { get {return true;} }
+  protected override CreateParams CreateParams {get {var p=base.CreateParams;p.ExStyle|=0x80000|0x80|0x08000000;return p;}}
+  public Pet(bool openTools) {
+   Text="boi_1 - desktop cat";FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;StartPosition=FormStartPosition.Manual;
+   Storage=new Store(Program.SmokeTest?Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"smoke-data"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"boi_1"));Data=Program.SmokeTest?new SaveData():Storage.Load();Clock=new FocusClock(Data);
+   string folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");
+   expressions=new Atlas(Path.Combine(folder,"cat-expressions.png"),3,3); walk=new Atlas(Path.Combine(folder,"cat-walk.png"),2,2);
+   Program.Trace("Art loaded");
+   using(var g=Graphics.FromHwnd(IntPtr.Zero))baseSize=(int)(96*g.DpiX/96);
+   Size=new Size(baseSize,baseSize);var area=Screen.PrimaryScreen.WorkingArea;
+   x=Data.HomeX<0?area.Right-Width-70:Data.HomeX;Location=new Point((int)x,area.Bottom-Height-3);Clamp();
+   menu=new ContextMenuStrip(); menu.Items.Add("Timer",null,(s,e)=>OpenTools(0));menu.Items.Add("To-do list",null,(s,e)=>OpenTools(1));
+   menu.Items.Add("Expressions & settings",null,(s,e)=>OpenTools(2));menu.Items.Add(new ToolStripSeparator());
+   menu.Items.Add("Pause / resume roaming",null,(s,e)=>{Data.PauseRoaming=!Data.PauseRoaming;Save();});
+   menu.Items.Add("Show / hide cat",null,(s,e)=>ToggleHidden());menu.Items.Add("Quit boi_1",null,(s,e)=>Quit());
+   tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true,ContextMenuStrip=menu};
+   using(var tiny=new Bitmap(expressions.Frames[0],32,32)){IntPtr handle=tiny.GetHicon();using(var icon=Icon.FromHandle(handle))catIcon=(Icon)icon.Clone();Native.DestroyIcon(handle);}tray.Icon=catIcon;
+   tray.MouseClick+=(s,e)=>{if(e.Button==MouseButtons.Left)OpenTools(0);};
+   MouseDown+=OnDown;MouseMove+=OnMove;MouseUp+=OnUp;
+   tick=new System.Windows.Forms.Timer{Interval=50};tick.Tick+=(s,e)=>Step();
+   Shown+=(s,e)=>{
+    Program.Trace("Pet shown");
+    if(!Native.RegisterHotKey(Handle,1,0x4000|2|1,(int)Keys.B))Storage.Warning="Ctrl+Alt+B is already in use. Open tools from the cat or tray.";
+    tick.Start(); Render();
+    if(openTools)BeginInvoke((Action)(()=>{OpenTools(0);if(Program.SmokeTest)RunSmoke();}));
+    if(Clock.State==ClockState.Finished)Complete(false);
+   };
+   Microsoft.Win32.SystemEvents.DisplaySettingsChanged+=DisplayChanged;
+   FormClosing+=(s,e)=>{if(!quitting){e.Cancel=true;ToggleHidden();}};
+   Program.Trace("Constructed");
+  }
+  void RunSmoke(){
+   string folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"..","evidence");Directory.CreateDirectory(folder);
+   try {Tools.RunSmoke(folder);using(var b=RenderFrame("Idle"))b.Save(Path.Combine(folder,"pet-idle.png"),ImageFormat.Png);
+    using(var b=RenderFrame("Walking"))b.Save(Path.Combine(folder,"pet-walk.png"),ImageFormat.Png);
+    File.WriteAllText(Path.Combine(folder,"smoke-result.txt"),"PASS: native tool form rendered; timer start/pause/resume/reset; task add/complete/edit/delete/undo; expression preview; reduced motion.\nDesktop compositor interactions are not verified by this harness.");
+   }catch(Exception ex){File.WriteAllText(Path.Combine(folder,"smoke-result.txt"),"FAIL: "+ex);}
+   quitting=true;Close();
+  }
+  void DisplayChanged(object s,EventArgs e){if(IsHandleCreated&&!IsDisposed)BeginInvoke((Action)(()=>{Clamp();Render();}));}
+  protected override void WndProc(ref Message m){if(m.Msg==0x21){m.Result=new IntPtr(3);return;}if(m.Msg==0x312||m.Msg==(int)Program.Wake){OpenTools(0);return;}base.WndProc(ref m);}
+  void OnDown(object s,MouseEventArgs e){if(e.Button!=MouseButtons.Left)return; down=true;moved=false;downCursor=Cursor.Position;downLocation=Location;Capture=true;lastInteraction=uptime.Elapsed.TotalSeconds;}
+  void OnMove(object s,MouseEventArgs e){if(!down)return;var d=new Point(Cursor.Position.X-downCursor.X,Cursor.Position.Y-downCursor.Y);if(Math.Abs(d.X)+Math.Abs(d.Y)>6){dragging=true;moved=true;Location=new Point(downLocation.X+d.X,downLocation.Y+d.Y);x=Left;Render();}}
+  void OnUp(object s,MouseEventArgs e){if(e.Button==MouseButtons.Right){menu.Show(Cursor.Position);return;}if(e.Button!=MouseButtons.Left)return; down=false;dragging=false;Capture=false;lastInteraction=uptime.Elapsed.TotalSeconds;preview="";
+   if(moved){Clamp();Data.HomeX=Left;Save();}else OpenTools(0);
+  }
+  void Clamp(){var a=Screen.PrimaryScreen.WorkingArea;x=Math.Max(a.Left,Math.Min(a.Right-Width,x));Location=new Point((int)x,a.Bottom-Height-3);}
+  bool IsFullscreen(){var fg=Native.GetForegroundWindow();if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
+  void Step(){double now=uptime.Elapsed.TotalSeconds,dt=Math.Min(.1,now-previous);previous=now;
+   if(Clock.Tick()){Complete(true);Save();}
+   if(frameCounter++%10==0){if(Program.ShowRequest.WaitOne(0))OpenTools(0);bool f=IsFullscreen();if(full!=f){full=f;if(!hidden){if(full)Hide();else Show();}}if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();}
+   if(hidden||full)return;
+   bool hovering=Bounds.Contains(Cursor.Position),tools=Tools!=null&&Tools.Visible;
+   if(hovering)lastInteraction=now;
+   string next=activity;
+   if(preview!=""&&now>=playUntil)preview="";
+   if(dragging) next="Dragged";
+   else if(preview!="")next=preview;
+   else if(hovering) next="Curious";
+   else if(Clock.State==ClockState.Running)next="Serious";
+   else if(tools||Data.PauseRoaming||Data.ReducedMotion)next="Idle";
+   else if(now-lastInteraction>90)next="Sleepy";
+   else if(now>=decisionAt){int choice=random.Next(10);next=choice<5?"Walking":choice<8?"Idle":choice==8?"Goofing":"Enjoying";decisionAt=now+(next=="Walking"?5+random.Next(7):3+random.Next(6));}
+   activity=next;
+   if(next=="Walking"&&!hovering&&!tools&&!Data.PauseRoaming&&!Data.ReducedMotion){x+=direction*26*dt;var a=Screen.PrimaryScreen.WorkingArea;if(x<a.Left||x>a.Right-Width){direction=-direction;x=Math.Max(a.Left,Math.Min(a.Right-Width,x));}Location=new Point((int)x,a.Bottom-Height-3);}
+   if(!dragging&&Math.Abs(Top-(Screen.PrimaryScreen.WorkingArea.Bottom-Height-3))>1){int target=Screen.PrimaryScreen.WorkingArea.Bottom-Height-3;Top+=(int)((target-Top)*.2);if(Math.Abs(target-Top)<6)Top=target;}
+   Render();
+  }
+  public void React(string state){preview=state;playUntil=uptime.Elapsed.TotalSeconds+(state=="Sleepy"?8:4);lastInteraction=uptime.Elapsed.TotalSeconds;Render();}
+  public void Complete(bool sound){React("Celebrating");if(sound&&Data.Sound)System.Media.SystemSounds.Asterisk.Play();tray.Text="boi_1 - timer finished";}
+  public void Save(){Clock.Export(Data);Storage.Save(Data);if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();}
+  public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);var a=Screen.PrimaryScreen.WorkingArea;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,Left+Width-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
+  public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();Show();Render();} }
+  public void Quit(){if(Clock.State==ClockState.Running&&MessageBox.Show("Your timer will be saved, but cannot alert while boi_1 is closed. Quit?","boi_1",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;Save();quitting=true;Close();}
+  void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;using(var b=RenderFrame(state))Native.Present(Handle,b,Location);}
+  Bitmap RenderFrame(string state){
+   int index=state=="Curious"?1:state=="Serious"?2:state=="Enjoying"?3:state=="Sleepy"?4:state=="Celebrating"?5:state=="Dragged"?6:state=="Goofing"?7:((uptime.Elapsed.TotalSeconds%5)<.15?8:0);
+   Bitmap src=state=="Walking"?walk.Frames[(int)(uptime.Elapsed.TotalSeconds*7)%4]:expressions.Frames[index];
+   var b=new Bitmap(Width,Height,PixelFormat.Format32bppArgb);using(var g=Graphics.FromImage(b)){
+    g.Clear(Color.Transparent);g.InterpolationMode=InterpolationMode.HighQualityBicubic;g.SmoothingMode=SmoothingMode.AntiAlias;
+    float w=Width*.88f,h=Height*.88f;float scale=Math.Min(w/src.Width,h/src.Height);w=src.Width*scale;h=src.Height*scale;
+    float bounce=0,angle=0;if(!Data.ReducedMotion){double t=uptime.Elapsed.TotalSeconds;if(state=="Walking")bounce=(float)Math.Abs(Math.Sin(t*10))*3;if(state=="Celebrating")bounce=(float)Math.Abs(Math.Sin(t*5))*15;if(state=="Goofing")angle=(float)Math.Sin(t*6)*12;if(state=="Enjoying")angle=(float)Math.Sin(t*3)*4;}
+    g.TranslateTransform(Width/2f,Height-8-h/2-bounce);if(state=="Walking"&&direction>0)g.ScaleTransform(-1,1);g.RotateTransform(angle);g.DrawImage(src,-w/2,-h/2,w,h);
+   }
+   return b;
+  }
+  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
+ }
+}

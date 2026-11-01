@@ -18,4 +18,13 @@ Check artwork and sound permissions individually rather than assuming the reposi
 
 ## Reused implementation and assets
 
-None yet. Generated design concepts are previews, not production sprite packs. Record final assets and their origin here when selected.
+No upstream implementation code was copied. The first build uses .NET Framework Windows Forms, System.Drawing, System.Xml, and Windows system APIs.
+
+## Generated cat artwork — 2026-11-01
+
+The owner selected the first cream-tabby cat. Its reference is assets/selected-cat-reference.png. Built-in Image Gen generated the animation atlases from that visual reference. No franchise characters or third-party pet sprites were requested or copied.
+
+- assets/cat-expressions-v2.png: nine poses in a 3x3 atlas. Idle, curious, serious, enjoying, sleeping, celebrating, dragged, goofy, blink. A padded revision supersedes the earlier cat-expressions.png to prevent tail clipping.
+- assets/cat-walk.png: four left-facing walking frames in a 2x2 atlas.
+
+Prompt briefs: preserve the selected cream-orange tabby, brown anime eyes, soft 2D outlines and pastel shading; full body in equal atlas cells with transparent margins; no text or scenery. Runtime decoding retains alpha and discards negligible alpha noise. Source atlases remain unmodified.

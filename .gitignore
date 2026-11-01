@@ -9,3 +9,7 @@ obj/
 !.env.example
 local-data/
 *.log
+dist/
+github-project.png
+evidence/
+assets/cat-expressions.png

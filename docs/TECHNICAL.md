@@ -1,6 +1,14 @@
 # Implementation approach
 
-This is an architecture proposal, not an implemented or benchmarked system.
+## First native build update — 2026-11-01
+
+Implemented C# with Windows Forms and a native per-pixel-alpha layered pet window on .NET Framework. Windows' built-in compiler is used because the modern SDK is not installed. The WPF/LTS text below is the original proposal, not the implemented stack.
+
+src/Core.cs implements timer and local versioned XML storage; Pet.cs decodes sprite atlases and runs behavior; Native.cs holds Windows interop; Tools.cs implements focusable tools. build.ps1 creates the portable dist folder. test.ps1 passes 13 core checks; --smoke-test uses isolated synthetic data and renders native forms.
+
+State uses atomic XML replacement and one backup. Damaged originals are preserved; recovery edits go into recovered-state.xml. Single-instance reopening uses a local named event. Ctrl+Alt+B is fixed in this first build. No upstream pet implementation code was copied. Native desktop verification remains incomplete: see ../design-qa.md.
+
+## Original proposal
 
 ## Proposed stack
 

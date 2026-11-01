@@ -1,5 +1,7 @@
 # Roadmap and release checklist
 
+2026-11-01 update: a first cream-tabby native test build is implemented. Core checks (13) and native-form smoke checks pass. Desktop integration checks remain unverified because live capture was obscured by a fullscreen app. Do not interpret implemented milestones as a verified release; see ../design-qa.md.
+
 ## Milestone 0 — planning (this pass)
 
 - [x] Define boi_1 and keep timer/tasks as the core.

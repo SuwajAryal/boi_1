@@ -1,10 +1,10 @@
 # boi_1 — product and design plan
 
-Planning draft · 2026-10-31
+Plan updated · 2026-11-01. Selected mascot: cream tabby, option 1 of the latest cat concepts. A first native test build now exists; see README and design-qa.md for implemented behavior and outstanding live checks. The build uses Windows Forms/native layering rather than the original WPF proposal.
 
 ## Purpose
 
-A small, friendly cloud pet that roams along the bottom of the Windows desktop, above the taskbar. The pet is the default experience; timer and tasks are tucked behind a click. It should feel alive, calm, and easy to dismiss. See [desktop-pet specification](DESKTOP-PET.md) for the researched behavior and implementation priorities.
+A small, friendly cream-tabby cat that roams along the bottom of the Windows desktop, above the taskbar. The pet is the default experience; timer and tasks are tucked behind a click. It should feel alive, calm, and easy to dismiss. See [desktop-pet specification](DESKTOP-PET.md) for the researched behavior and implementation priorities.
 
 The earlier idea was a desktop pet connected to Google Search AI. This version keeps the companion interface and deliberately starts with local utilities. Google integration is a separate future decision, not a dependency or promise for this release.
 
@@ -18,7 +18,7 @@ Primary success: open the panel, add a task or start a timer, and return to work
 
 | Area | Included |
 | --- | --- |
-| Companion | One roaming cloud, idle/drift/nap/drag/celebrate states, pause roaming, click for tools, hide |
+| Companion | One roaming cat, idle/drift/nap/drag/celebrate states, pause roaming, click for tools, hide |
 | Timer | One countdown; 5, 15, 25 minute presets; custom whole minutes from 1 to 180 |
 | Timer controls | Start, pause, resume, reset; reset returns to the selected duration |
 | Completion | Visible finished state, one gentle optional sound, tray indication |
@@ -34,7 +34,7 @@ No chat, voice, web search, recurring tasks, task due dates, subtasks, calendar,
 
 ### Opening boi_1
 
-First launch shows only the cloud near the bottom-right, just above the taskbar, with a brief hint: “Click me for your timer and tasks.” It then drifts left and right with quiet pauses. No permanent panel, onboarding wizard, or login.
+First launch shows only the cat near the bottom-right, just above the taskbar, with a brief hint: “Click me for your timer and tasks.” It then drifts left and right with quiet pauses. No permanent panel, onboarding wizard, or login.
 
 Click opens a small anchored panel. Click again or press Escape to hide it. The timer continues while the panel is hidden. Closing the panel hides it; only Quit stops the process. The tray menu provides Open, Show/hide character, and Quit.
 
@@ -64,7 +64,7 @@ Character and panel must be designed together. Desired feel: cute, soft, legible
 
 Panel information order: app name and hide/settings access; Timer and Tasks tabs; the current tool; compact running-timer status when viewing Tasks. Keep a running timer visible even on the other tab.
 
-The direction is now a roaming cloud buddy. The earlier three panel-heavy mockups were rejected and are not implementation targets. Explore three pet-focused appearances in desktop context, with no large utility panel. Keep the cloud small and show its relationship to the taskbar. Final artwork and animation remain to be selected.
+The owner selected the cream-tabby cat in the soft 2D anime style. Cloud concepts and panel-heavy concepts were rejected. Keep the cat small and free on the desktop. The first sprite atlases are generated and source art is retained in assets/.
 
 Choose the pet appearance before app scaffolding. Utility popup styling follows the selected pet later; it must not dominate the design.
 

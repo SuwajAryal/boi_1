@@ -2,15 +2,27 @@
 
 A little desktop buddy for getting small things done.
 
-**Status: planning — no runnable app yet.**
+**Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
 
-boi_1 will be a little cloud pet roaming along the bottom of the Windows desktop, above the taskbar. It wanders, blinks, rests, and naps. No panel is visible by default. Click the pet for a timer or simple to-do list; close the popup and the pet stays.
+boi_1 is a cream-tabby cat with a soft 2D anime look, designed to stroll along the desktop above the taskbar. Click for a timer or task list; dismiss the tools and the cat stays.
+
+## Run the test build
+
+Run `./build.ps1` in PowerShell, then open `dist/boi_1.exe`. Keep the assets folder beside it. Requires Windows with .NET Framework 4.8. Uses Windows' built-in compiler; no modern SDK or browser engine is needed.
+
+Click the cat for tools, right-click for quick controls, or use Ctrl+Alt+B. `Open-boi-tools.exe` opens the tools directly. Cat & settings includes nine expression previews, reduced motion, sound, and pause roaming. Quit from the tray or tools; no startup entry is installed.
+
+Four walking frames and nine poses support blinking, strolling, goofy wiggling, happy swaying, napping, a serious focusing pose, a drag pose, and a celebration hop. These are sprite animations, not a full skeletal rig or pet-care simulation.
+
+Run `./test.ps1` for 13 core checks. `dist/boi_1.exe --smoke-test` exercises native forms with isolated synthetic data and writes rendered evidence under evidence/. It does not prove real desktop click-through, dragging, focus, fullscreen transitions, hotkey delivery, or sleep/wake. See [QA status](design-qa.md). This is an unsigned test build, not a production release.
+
+State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with atomic writes and backup recovery. No telemetry or background network calls are implemented. The credits link opens GitHub only when clicked. Primary monitor only; the initial shortcut is fixed.
 
 ## First version
 
 - One countdown timer with start, pause, resume, reset, and a gentle completion alert.
 - One to-do list with add, edit, complete, reopen, delete, and undo.
-- A roaming cloud pet with idle, drift, nap, drag, and celebration animations; tray access and a show/hide shortcut.
+- A roaming cream tabby with idle, walk, nap, drag, and celebration animations; tray access and a show/hide shortcut.
 - Local saving, optional sound, and reduced motion.
 
 Works offline. No account, subscription, AI model, browser automation, or cloud sync is planned for v0.1.
@@ -23,11 +35,11 @@ Works offline. No account, subscription, AI model, browser automation, or cloud 
 - [Desktop-pet research and behavior specification](docs/DESKTOP-PET.md)
 - [Credits and reuse record](CREDITS.md)
 
-Next: choose the roaming pet's appearance, then prove its transparent desktop window, movement, and click behavior before adding utilities.
+Next: verify the native pet's movement and interactions on the user's desktop. The desktop automation surface could not expose a targetable boi_1 window during this build session.
 
 ## Development
 
-Proposed approach: C# and WPF for Windows. The toolchain and supported runtime will be confirmed when implementation begins. No build commands or installer exist yet.
+Implemented first build: C# with Windows Forms and a native alpha-layered pet window on .NET Framework, using the compiler already installed on Windows. This replaces the original WPF/modern .NET proposal for this prototype. No installer or automatic updater is included.
 
 ## Privacy and public repository
 

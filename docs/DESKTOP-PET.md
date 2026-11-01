@@ -1,10 +1,10 @@
 # Desktop-pet research and revised behavior
 
-2026-10-31. Planning and source review only; no upstream application was installed or run.
+Research 2026-10-31; implementation update 2026-11-01. No upstream application was installed or run. The owner subsequently selected the cream-tabby anime cat; first native build details and verification status are in README and design-qa.md.
 
 ## Product decision
 
-boi_1 is a small cloud pet living above the taskbar. The ordinary screen has only the pet, with no permanent window frame, dashboard, card, or timer panel. It drifts along the bottom, pauses, looks around, and naps. Click to open simple tools; dismissing them leaves the pet roaming.
+boi_1 is a small cream-tabby cat living above the taskbar. The ordinary screen has only the pet, with no permanent window frame, dashboard, card, or timer panel. It drifts along the bottom, pauses, looks around, and naps. Click to open simple tools; dismissing them leaves the pet roaming.
 
 The earlier panel-heavy concepts do not represent the requested product. New concepts should show a small pet on a desktop, not a panel with a decorative pet beside it.
 
@@ -20,10 +20,10 @@ Recommendation: use mature framework/Windows facilities and the proven behavior 
 
 ## Movement and interaction specification
 
-- Cloud size: approximately 80 display-independent pixels wide, adjustable later after visual selection.
+- Cat size: approximately 80 display-independent pixels wide, adjustable later after visual selection.
 - One lane on the primary monitor, baseline just above the taskbar's usable work-area edge. For auto-hidden taskbars, leave a small inset from the bottom. Recompute when work area or scaling changes.
 - Proposed drift speed: 20–35 display-independent pixels per second, bounded to the visible lane. Short journeys alternate with longer rests; movement should not be continuous pacing.
-- The cloud glides with a gentle bob rather than pretending to have feet. Turn by shifting eyes and a small body lean; no sudden teleports.
+- The selected cat walks with a four-frame paw cycle and gentle bob. Flip walking direction at the lane edges; no sudden teleports.
 - Hover immediately stops translation. Clicking opens tools; keep the pet stationary while tools or a menu are open. Resume only after pointer leaves and tools close.
 - Left-button motion beyond a small drag threshold becomes a drag, suppressing the click action. On release, ease back to the bottom lane at the chosen horizontal position. No throwing or physics in v0.1.
 - Right-click opens Timer, Tasks, Pause/resume roaming, Hide, and Quit. Tray offers equivalent access. Keyboard shortcut opens tools, so a moving pet is never the only entry point.
@@ -41,9 +41,9 @@ Priority: hidden/fullscreen > drag > open tools/hover/pause > completion reactio
 
 ## Art and animation requirements
 
-Choose one consistent cloud identity before implementation. Minimum artwork: idle/blink loop, side-facing drift loop, nap loop, lifted/drag pose, and happy completion. Use a shared canvas, stable anchor, consistent scale, and real transparent alpha. Sprite-frame timing and footprint must be defined; generated concept pictures alone are insufficient production animation.
+Choose one consistent cat identity before implementation. Minimum artwork: idle/blink loop, side-facing drift loop, nap loop, lifted/drag pose, and happy completion. Use a shared canvas, stable anchor, consistent scale, and real transparent alpha. Sprite-frame timing and footprint must be defined; generated concept pictures alone are insufficient production animation.
 
-Use original or clearly licensed cloud art. Investigate reusable animation/rendering code as needed, with path-level provenance. No copying a recognizable proprietary pet character.
+Use original or clearly licensed cat art. Investigate reusable animation/rendering code as needed, with path-level provenance. No copying a recognizable proprietary pet character.
 
 ## First engineering proof
 
