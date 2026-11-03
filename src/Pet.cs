@@ -53,6 +53,60 @@ namespace Boi {
   }
   public void Dispose(){foreach(var f in Frames)f.Dispose();}
  }
+ // Explorer can take focus back while its hidden-icons flyout is open.
+ // A regular popup window keeps the tray commands available through that handoff.
+ sealed class TrayMenu : Form {
+  bool mouseDown, escapeDown;
+  public TrayMenu(ToolStripItemCollection items){
+   Text="boi_1 tray menu";
+   FormBorderStyle=FormBorderStyle.FixedSingle;
+   ControlBox=false;
+   ShowInTaskbar=false;
+   StartPosition=FormStartPosition.Manual;
+   TopMost=true;
+   AutoScaleMode=AutoScaleMode.Dpi;
+   BackColor=SystemColors.Window;
+   var list=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(4)};
+   int height=8;
+   foreach(ToolStripItem item in items){
+    if(item is ToolStripSeparator){
+     list.Controls.Add(new Panel{BackColor=SystemColors.ControlDark,Size=new Size(184,1),Margin=new Padding(4,3,4,3)});
+     height+=7;
+     continue;
+    }
+    var command=item;
+    var button=new Button{Text=command.Text,TextAlign=ContentAlignment.MiddleLeft,Size=new Size(192,29),Margin=Padding.Empty,FlatStyle=FlatStyle.Flat};
+    button.FlatAppearance.BorderSize=0;
+    button.Click+=(s,e)=>{Hide();command.PerformClick();};
+    list.Controls.Add(button);
+    height+=button.Height;
+   }
+   ClientSize=new Size(200,height);
+   Controls.Add(list);
+  }
+
+  public void OpenAt(Point anchor){
+   var work=Screen.FromPoint(anchor).WorkingArea;
+   Location=new Point(Math.Max(work.Left,Math.Min(work.Right-Width,anchor.X)),Math.Max(work.Top,Math.Min(work.Bottom,anchor.Y)-Height));
+   mouseDown=MousePressed();
+   escapeDown=KeyPressed(Keys.Escape);
+   if(!Visible)Show();
+   Native.KeepAbove(Handle);
+  }
+
+  static bool KeyPressed(Keys key){return Native.GetAsyncKeyState((int)key)<0;}
+  static bool MousePressed(){return KeyPressed(Keys.LButton)||KeyPressed(Keys.RButton)||KeyPressed(Keys.MButton);}
+  public void CheckDismiss(){
+   bool pressed=MousePressed(),escape=KeyPressed(Keys.Escape);
+   if((pressed&&!mouseDown&&!Bounds.Contains(Cursor.Position))||(escape&&!escapeDown))Hide();
+   mouseDown=pressed;
+   escapeDown=escape;
+  }
+  protected override bool ProcessCmdKey(ref Message m,Keys key){
+   if(key==Keys.Escape){Hide();return true;}
+   return base.ProcessCmdKey(ref m,key);
+  }
+ }
  sealed class Pet : Form {
   public SaveData Data; public FocusClock Clock; public Store Storage;
   public Tools Tools;
@@ -71,8 +125,7 @@ namespace Boi {
   bool foregroundFullscreen;
   IntPtr pinnedFullscreenWindow;
   NotifyIcon tray;ContextMenuStrip menu;
-  readonly NativeWindow trayMenuOwner=new NativeWindow();
-  bool trayMenuOpen;
+  TrayMenu trayMenu;
   System.Windows.Forms.Timer tick;Atlas expressions,walk,idle,classic,extra;
   readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
   double previous,x,decisionAt,playUntil,nextCheck,animationStart;int direction=-1;string activity="Idle",preview="",animationState="";
@@ -97,10 +150,10 @@ namespace Boi {
    menu.Items.Add("Show / hide cat",null,(s,e)=>ToggleHidden());menu.Items.Add("Quit boi_1",null,(s,e)=>Quit());
    tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true};
    using(var tiny=new Bitmap(idle.Frames[0],32,32)){IntPtr handle=tiny.GetHicon();using(var icon=Icon.FromHandle(handle))catIcon=(Icon)icon.Clone();Native.DestroyIcon(handle);}tray.Icon=catIcon;
-   trayMenuOwner.CreateHandle(new CreateParams{Style=unchecked((int)0x80000000),ExStyle=0x80});
+   trayMenu=new TrayMenu(menu.Items);
    tray.MouseClick+=(s,e)=>{
     if(e.Button==MouseButtons.Left)OpenTools(0);
-    else if(e.Button==MouseButtons.Right)BeginInvoke((Action)ShowTrayMenu);
+    else if(e.Button==MouseButtons.Right){var position=Cursor.Position;BeginInvoke((Action)(()=>{if(!quitting)trayMenu.OpenAt(position);}));}
    };
    counter=new CornerCounter(this);
    MouseDown+=OnDown;MouseMove+=OnMove;MouseUp+=OnUp;
@@ -127,17 +180,6 @@ namespace Boi {
   }
   void DisplayChanged(object s,EventArgs e){if(IsHandleCreated&&!IsDisposed)BeginInvoke((Action)(()=>{Clamp();Render();}));}
   protected override void WndProc(ref Message m){if(m.Msg==0x21){m.Result=new IntPtr(3);return;}if(m.Msg==0x312||m.Msg==(int)Program.Wake){OpenTools(0);return;}base.WndProc(ref m);}
-  void ShowTrayMenu(){
-   if(trayMenuOpen||quitting)return;
-   var labels=new string[menu.Items.Count];
-   for(int i=0;i<labels.Length;i++)
-    if(!(menu.Items[i] is ToolStripSeparator))labels[i]=menu.Items[i].Text;
-   int selected;
-   trayMenuOpen=true;
-   try { selected=Native.ShowTrayMenu(trayMenuOwner.Handle,Cursor.Position,labels); }
-   finally { trayMenuOpen=false; }
-   if(selected>0)menu.Items[selected-1].PerformClick();
-  }
   void OnDown(object s,MouseEventArgs e){if(e.Button!=MouseButtons.Left)return; down=true;moved=false;downCursor=Cursor.Position;downLocation=Location;Capture=true;lastInteraction=uptime.Elapsed.TotalSeconds;}
   void OnMove(object s,MouseEventArgs e){if(!down)return;var d=new Point(Cursor.Position.X-downCursor.X,Cursor.Position.Y-downCursor.Y);if(Math.Abs(d.X)+Math.Abs(d.Y)>6){dragging=true;moved=true;Location=new Point(downLocation.X+d.X,downLocation.Y+d.Y);x=Left;Render();}}
   void OnUp(object s,MouseEventArgs e){if(e.Button==MouseButtons.Right){menu.Show(Cursor.Position);return;}if(e.Button!=MouseButtons.Left)return; down=false;dragging=false;Capture=false;lastInteraction=uptime.Elapsed.TotalSeconds;preview="";
@@ -146,6 +188,7 @@ namespace Boi {
   void Clamp(){var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);x=Math.Max(min,Math.Min(max,x));Location=new Point((int)x,a.Bottom-Height-3);}
   bool IsFullscreen(IntPtr fg){if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
   void Step(){double now=uptime.Elapsed.TotalSeconds,dt=Math.Min(.1,now-previous);previous=now;
+   if(trayMenu.Visible)trayMenu.CheckDismiss();
    if(Clock.Tick()){Complete(true);Save();}
    if(now>=nextCheck){
     nextCheck=now+.25;
@@ -158,7 +201,7 @@ namespace Boi {
     UpdateCounter(now);
     if(!Data.PinOverFullscreen)pinnedFullscreenWindow=IntPtr.Zero;
     // Reordering the overlay repeatedly can cover taskbar and app context menus.
-    if(foregroundFullscreen&&Data.PinOverFullscreen&&foreground!=pinnedFullscreenWindow&&!trayMenuOpen&&!menu.Visible&&!counter.ContextMenuStrip.Visible){
+    if(foregroundFullscreen&&Data.PinOverFullscreen&&foreground!=pinnedFullscreenWindow&&!trayMenu.Visible&&!menu.Visible&&!counter.ContextMenuStrip.Visible){
      pinnedFullscreenWindow=foreground;
      if(Visible)Native.KeepAbove(Handle);
      if(counter.Visible)Native.KeepAbove(counter.Handle);
@@ -220,6 +263,6 @@ namespace Boi {
    }
    return b;
   }
-  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();trayMenuOwner.DestroyHandle();menu.Dispose();counter.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
+  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();trayMenu.Dispose();menu.Dispose();counter.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
  }
 }

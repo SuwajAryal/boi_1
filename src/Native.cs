@@ -26,24 +26,7 @@ namespace Boi {
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern bool PostMessage(IntPtr hwnd,uint msg,IntPtr w,IntPtr l);
   [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr hwnd,IntPtr after,int x,int y,int cx,int cy,uint flags);
   public static void KeepAbove(IntPtr hwnd) { SetWindowPos(hwnd,new IntPtr(-1),0,0,0,0,0x0013); }
-  [DllImport("user32.dll")] static extern IntPtr CreatePopupMenu();
-  [DllImport("user32.dll")] static extern bool DestroyMenu(IntPtr menu);
-  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool AppendMenu(IntPtr menu,uint flags,UIntPtr id,string text);
-  [DllImport("user32.dll")] static extern int TrackPopupMenuEx(IntPtr menu,uint flags,int x,int y,IntPtr owner,IntPtr options);
-  [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hwnd);
-
-  public static int ShowTrayMenu(IntPtr owner,Point position,string[] labels){
-   const uint separator=0x800, rightButton=0x2, bottomAlign=0x20, returnCommand=0x100;
-   var popup=CreatePopupMenu();
-   if(popup==IntPtr.Zero)return 0;
-   try {
-    for(int i=0;i<labels.Length;i++)
-     if(!AppendMenu(popup,labels[i]==null?separator:0,new UIntPtr((uint)(i+1)),labels[i]))return 0;
-    SetForegroundWindow(owner);
-    try { return TrackPopupMenuEx(popup,rightButton|bottomAlign|returnCommand,position.X,position.Y,owner,IntPtr.Zero); }
-    finally { PostMessage(owner,0,IntPtr.Zero,IntPtr.Zero); } // WM_NULL lets the next tray menu open normally.
-   }finally{DestroyMenu(popup);}
-  }
+  [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int key);
   public static void Present(IntPtr hwnd,Bitmap bitmap,Point location) {
    IntPtr screen=GetDC(IntPtr.Zero),dc=CreateCompatibleDC(screen),hb=IntPtr.Zero,old=IntPtr.Zero;
    try { hb=bitmap.GetHbitmap(Color.FromArgb(0)); old=SelectObject(dc,hb);
