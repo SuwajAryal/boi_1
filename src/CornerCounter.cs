@@ -9,7 +9,7 @@ namespace Boi {
   readonly ContextMenuStrip actions;
   readonly Font heading = new Font("Segoe UI",9,FontStyle.Bold);
   readonly Font digits = new Font("Segoe UI",18,FontStyle.Bold);
-  readonly Font quietDigits = new Font("Segoe UI",13,FontStyle.Regular);
+  readonly Font quietDigits = new Font("Segoe UI",13,FontStyle.Bold);
   string caption="", value="";
   float progress;
   bool hovered, glossy;
@@ -62,15 +62,20 @@ namespace Boi {
    var g=e.Graphics;
    g.SmoothingMode=SmoothingMode.AntiAlias;
    if(glossy){
-    using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(225,238,247),LinearGradientMode.Vertical))
+    using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(211,231,247),LinearGradientMode.Vertical)){
+     glaze.InterpolationColors=new ColorBlend {
+      Colors=new[]{Color.White,Color.FromArgb(241,249,255),Color.FromArgb(220,237,250),Color.FromArgb(211,231,247)},
+      Positions=new[]{0f,.38f,.52f,1f}
+     };
      g.FillRectangle(glaze,ClientRectangle);
+    }
    }else g.Clear(Color.FromArgb(255,248,233));
-   using(var edge=new Pen(Color.FromArgb(198,213,235),2))
+   using(var edge=new Pen(glossy?Color.FromArgb(169,196,223):Color.FromArgb(198,213,235),2))
    using(var outline=SoftShape.Pill(new Rectangle(1,1,Width-2,Height-2)))
     g.DrawPath(edge,outline);
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
    TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
-   TextRenderer.DrawText(g,value,glossy?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(82,103,129):Color.FromArgb(44,62,96),center);
+   TextRenderer.DrawText(g,value,glossy?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(48,76,107):Color.FromArgb(44,62,96),center);
    if(hovered){
     var close=CloseArea;
     using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
@@ -92,6 +97,7 @@ namespace Boi {
    string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
    float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
    if(glossy!=nextGlossy||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
+    if(glossy!=nextGlossy)Opacity=nextGlossy?.80:1;
     glossy=nextGlossy;caption=nextCaption;value=nextValue;progress=nextProgress;
     AccessibleName=caption+" "+value;
     Invalidate();
