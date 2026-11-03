@@ -27,7 +27,8 @@ State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with ato
 ## First version
 
 - One countdown timer with start, pause, resume, reset, and a gentle completion alert.
-- A corner focus badge with a live countdown. Click to open the timer. Right-click to adjust or reset the saved tally.
+- A corner focus badge with a live countdown. Click to open the timer or hover and click × to hide the badge. Turn it back on in Settings. Right-click to adjust or reset the saved tally.
+- Switch to Counter for a count-up session stopwatch with start, pause, resume, and reset. It tracks the current app session independently of the countdown.
 - Optional eye breaks every 20 minutes while boi_1 is open. The corner badge prompts you to look into the distance for 20 seconds.
 - Fullscreen visibility enabled by default for the cat and counter in borderless apps. Exclusive fullscreen can prevent desktop overlays from appearing. Find all three options in Settings.
 - One to-do list with add, edit, complete, reopen, delete, and undo.

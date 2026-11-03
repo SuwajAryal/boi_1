@@ -11,6 +11,8 @@ namespace Boi {
   readonly Font digits = new Font("Segoe UI",18,FontStyle.Bold);
   string caption="", value="";
   float progress;
+  bool hovered;
+  Rectangle CloseArea {get{return new Rectangle(Width-34,Height/2-12,24,24);}}
 
   public CornerCounter(Pet pet) {
    this.pet=pet;
@@ -30,9 +32,15 @@ namespace Boi {
    actions.Items.Add("Open focus timer",null,(s,e)=>pet.OpenTools(0));
    actions.Items.Add("Add one to tally",null,(s,e)=>ChangeCount(1));
    actions.Items.Add("Subtract one from tally",null,(s,e)=>ChangeCount(-1));
+   actions.Items.Add("Hide corner bubble",null,(s,e)=>pet.HideCornerTimer());
    actions.Items.Add("Reset tally",null,(s,e)=>{pet.Data.Count=0;pet.Save();});
    ContextMenuStrip=actions;
-   MouseClick+=(s,e)=>{if(e.Button==MouseButtons.Left)pet.OpenTools(0);};
+   MouseEnter+=(s,e)=>{hovered=true;Invalidate();};
+   MouseLeave+=(s,e)=>{hovered=false;Invalidate();};
+   MouseClick+=(s,e)=>{
+    if(e.Button!=MouseButtons.Left)return;
+    if(CloseArea.Contains(e.Location))pet.HideCornerTimer();else pet.OpenTools(0);
+   };
   }
 
   void ChangeCount(int delta) {
@@ -59,6 +67,11 @@ namespace Boi {
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
    TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
    TextRenderer.DrawText(g,value,digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(44,62,96),center);
+   if(hovered){
+    var close=CloseArea;
+    using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
+    TextRenderer.DrawText(g,"×",heading,close,Color.FromArgb(44,62,96),center);
+   }
    if(progress>0) {
     int left=Width/4, y=Height*9/10;
     using(var pen=new Pen(Color.FromArgb(134,165,214),2))
@@ -67,12 +80,12 @@ namespace Boi {
   }
 
   public void UpdateDisplay(Rectangle area,int eyeSeconds,bool visible) {
-   if(!visible){if(Visible)Hide();return;}
+   if(!visible){hovered=false;if(Visible)Hide();return;}
    var clock=pet.Clock;
-   string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":clock.State==ClockState.Running?"FOCUS TIME":
+   string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":pet.CountUp?"SESSION COUNTER":clock.State==ClockState.Running?"FOCUS TIME":
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
-   string nextValue=eyeSeconds>0?eyeSeconds+"s":clock.Display;
-   float nextProgress=eyeSeconds>0?eyeSeconds/20f:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
+   string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
+   float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
    if(caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
     caption=nextCaption;value=nextValue;progress=nextProgress;
     AccessibleName=caption+" "+value;

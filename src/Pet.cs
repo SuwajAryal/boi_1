@@ -56,6 +56,13 @@ namespace Boi {
  sealed class Pet : Form {
   public SaveData Data; public FocusClock Clock; public Store Storage;
   public Tools Tools;
+  public readonly Stopwatch SessionCounter=new Stopwatch();
+  public bool CountUp;
+  public string SessionDisplay {get{
+   var elapsed=SessionCounter.Elapsed;
+   return ((long)elapsed.TotalHours).ToString("00")+":"+elapsed.Minutes.ToString("00")+":"+elapsed.Seconds.ToString("00");
+  }}
+  public void HideCornerTimer(){eyeBreakEnds=0;Data.ShowCounter=false;Save();UpdateCounter(uptime.Elapsed.TotalSeconds);}
   CornerCounter counter;
   double nextEyeBreak, eyeBreakEnds;
   bool foregroundFullscreen;
@@ -104,7 +111,7 @@ namespace Boi {
    string folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"..","evidence");Directory.CreateDirectory(folder);
    try {Tools.RunSmoke(folder);using(var b=RenderFrame("Idle"))b.Save(Path.Combine(folder,"pet-idle.png"),ImageFormat.Png);
     using(var b=RenderFrame("Walking"))b.Save(Path.Combine(folder,"pet-walk.png"),ImageFormat.Png);
-    File.WriteAllText(Path.Combine(folder,"smoke-result.txt"),"PASS: native tool form rendered; timer start/pause/resume/reset; task add/complete/edit/delete/undo; expression preview; reduced motion.\nDesktop compositor interactions are not verified by this harness.");
+    File.WriteAllText(Path.Combine(folder,"smoke-result.txt"),"PASS: native tool form rendered; timer start/pause/resume/reset; session counter start/pause; task add/complete/edit/delete/undo; expression preview; reduced motion.\nDesktop compositor interactions are not verified by this harness.");
    }catch(Exception ex){File.WriteAllText(Path.Combine(folder,"smoke-result.txt"),"FAIL: "+ex);}
    quitting=true;Close();
   }
@@ -169,7 +176,7 @@ namespace Boi {
   public void React(string state){preview=state;playUntil=uptime.Elapsed.TotalSeconds+(state=="Sleepy"?8:4);lastInteraction=uptime.Elapsed.TotalSeconds;Render();}
   public void Complete(bool sound){React("Celebrating");if(sound&&Data.Sound)System.Media.SystemSounds.Asterisk.Play();tray.Text="boi_1 - timer finished";}
   public void Save(){Clock.Export(Data);Storage.Save(Data);if(Tools!=null&&!Tools.IsDisposed){Tools.TopMost=Data.PinOverFullscreen;Tools.RefreshState();}}
-  public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);Tools.TopMost=Data.PinOverFullscreen;var a=Screen.PrimaryScreen.WorkingArea;int right=counter.Visible&&counter.Left-12-Tools.Width>=a.Left?counter.Left-12:Left+Width;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,right-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
+  public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);UpdateCounter(uptime.Elapsed.TotalSeconds);Tools.SelectPage(page);Tools.TopMost=Data.PinOverFullscreen;var a=Screen.PrimaryScreen.WorkingArea;int right=counter.Visible&&counter.Left-12-Tools.Width>=a.Left?counter.Left-12:Left+Width;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,right-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
   public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();if(!full)Show();Render();} }
   public void Quit(){if(Clock.State==ClockState.Running&&MessageBox.Show("Your timer will be saved, but cannot alert while boi_1 is closed. Quit?","boi_1",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;Save();quitting=true;Close();}
   void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}double seconds=uptime.Elapsed.TotalSeconds-animationStart;Clip clip=CatAnimation.Get(state);string key=state+":"+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)+":"+direction+":"+Width+":"+Height;bool changed=key!=cachedKey;
