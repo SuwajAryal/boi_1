@@ -56,6 +56,9 @@ namespace Boi {
  sealed class Pet : Form {
   public SaveData Data; public FocusClock Clock; public Store Storage;
   public Tools Tools;
+  CornerCounter counter;
+  double nextEyeBreak, eyeBreakEnds;
+  bool foregroundFullscreen;
   NotifyIcon tray;ContextMenuStrip menu;
   System.Windows.Forms.Timer tick;Atlas expressions,walk,idle,classic,extra;
   readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
@@ -82,6 +85,7 @@ namespace Boi {
    tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true,ContextMenuStrip=menu};
    using(var tiny=new Bitmap(idle.Frames[0],32,32)){IntPtr handle=tiny.GetHicon();using(var icon=Icon.FromHandle(handle))catIcon=(Icon)icon.Clone();Native.DestroyIcon(handle);}tray.Icon=catIcon;
    tray.MouseClick+=(s,e)=>{if(e.Button==MouseButtons.Left)OpenTools(0);};
+   counter=new CornerCounter(this);
    MouseDown+=OnDown;MouseMove+=OnMove;MouseUp+=OnUp;
    tick=new System.Windows.Forms.Timer{Interval=16};tick.Tick+=(s,e)=>Step();
    Shown+=(s,e)=>{
@@ -115,7 +119,16 @@ namespace Boi {
   bool IsFullscreen(){var fg=Native.GetForegroundWindow();if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
   void Step(){double now=uptime.Elapsed.TotalSeconds,dt=Math.Min(.1,now-previous);previous=now;
    if(Clock.Tick()){Complete(true);Save();}
-   if(now>=nextCheck){nextCheck=now+.5;if(Program.ShowRequest.WaitOne(0))OpenTools(0);bool f=IsFullscreen();if(full!=f){full=f;if(!hidden){if(full)Hide();else Show();}}if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();}
+   if(now>=nextCheck){
+    nextCheck=now+.25;
+    if(Program.ShowRequest.WaitOne(0))OpenTools(0);
+    foregroundFullscreen=IsFullscreen();
+    full=foregroundFullscreen&&!Data.AboveFullscreen;
+    bool showPet=!hidden&&!full;
+    if(Visible!=showPet){if(showPet)Show();else Hide();}
+    UpdateCounter(now);
+    if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();
+   }
    if(hidden||full)return;
    bool hovering=Bounds.Contains(Cursor.Position),tools=Tools!=null&&Tools.Visible;
    if(hovering)lastInteraction=now;
@@ -133,11 +146,26 @@ namespace Boi {
    if(!dragging&&Math.Abs(Top-(Screen.PrimaryScreen.WorkingArea.Bottom-Height-3))>1){int target=Screen.PrimaryScreen.WorkingArea.Bottom-Height-3;Top+=(int)((target-Top)*.2);if(Math.Abs(target-Top)<6)Top=target;}
    Render();
   }
+  void UpdateCounter(double now){
+   if(!Data.EyeBreaks){nextEyeBreak=eyeBreakEnds=0;}
+   else if(nextEyeBreak==0){nextEyeBreak=now+20*60;}
+   else if(now>=nextEyeBreak){
+    eyeBreakEnds=now+20;
+    nextEyeBreak=now+20*60;
+    if(Data.Sound)System.Media.SystemSounds.Asterisk.Play();
+    if(full)tray.ShowBalloonTip(5000,"Eye break","Look about 20 feet (6 metres) away for 20 seconds.",ToolTipIcon.Info);
+   }
+   int eyeSeconds=(int)Math.Ceiling(Math.Max(0,eyeBreakEnds-now));
+   var screen=Screen.PrimaryScreen;
+   var area=Data.AboveFullscreen&&foregroundFullscreen?screen.Bounds:screen.WorkingArea;
+   int bottom=hidden?area.Bottom:Math.Min(area.Bottom,Top);
+   counter.UpdateDisplay(Rectangle.FromLTRB(area.Left,area.Top,area.Right,bottom),eyeSeconds,!full&&(Data.ShowCounter||eyeSeconds>0));
+  }
   public void React(string state){preview=state;playUntil=uptime.Elapsed.TotalSeconds+(state=="Sleepy"?8:4);lastInteraction=uptime.Elapsed.TotalSeconds;Render();}
   public void Complete(bool sound){React("Celebrating");if(sound&&Data.Sound)System.Media.SystemSounds.Asterisk.Play();tray.Text="boi_1 - timer finished";}
   public void Save(){Clock.Export(Data);Storage.Save(Data);if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();}
   public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);var a=Screen.PrimaryScreen.WorkingArea;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,Left+Width-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
-  public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();Show();Render();} }
+  public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();if(!full)Show();Render();} }
   public void Quit(){if(Clock.State==ClockState.Running&&MessageBox.Show("Your timer will be saved, but cannot alert while boi_1 is closed. Quit?","boi_1",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;Save();quitting=true;Close();}
   void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}double seconds=uptime.Elapsed.TotalSeconds-animationStart;Clip clip=CatAnimation.Get(state);string key=state+":"+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)+":"+direction+":"+Width+":"+Height;bool changed=key!=cachedKey;
    if(changed){if(cachedFrame!=null)cachedFrame.Dispose();cachedFrame=RenderFrame(state,seconds);cachedKey=key;}
@@ -155,6 +183,6 @@ namespace Boi {
    }
    return b;
   }
-  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
+  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();counter.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
  }
 }

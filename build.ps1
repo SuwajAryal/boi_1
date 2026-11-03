@@ -5,7 +5,7 @@ $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (!(Test-Path -LiteralPath $compiler)) { throw 'Windows .NET Framework 4.x compiler is required.' }
 $outputRoot = Join-Path $projectRoot $OutputFolder
 New-Item -ItemType Directory -Force -Path (Join-Path $outputRoot 'assets') | Out-Null
-& $compiler /nologo /target:winexe /optimize+ /platform:anycpu /out:"$outputRoot\boi_1.exe" /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Xml.dll "$projectRoot\src\Core.cs" "$projectRoot\src\Native.cs" "$projectRoot\src\Pet.cs" "$projectRoot\src\Tools.cs"
+& $compiler /nologo /target:winexe /optimize+ /platform:anycpu /out:"$outputRoot\boi_1.exe" /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Xml.dll "$projectRoot\src\Core.cs" "$projectRoot\src\Native.cs" "$projectRoot\src\Pet.cs" "$projectRoot\src\Tools.cs" "$projectRoot\src\CornerCounter.cs"
 if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
 & $compiler /nologo /target:winexe /out:"$outputRoot\Open-boi-tools.exe" "$projectRoot\src\OpenTools.cs"
 if ($LASTEXITCODE -ne 0) { throw 'Tools launcher build failed.' }

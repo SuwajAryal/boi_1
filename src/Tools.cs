@@ -62,10 +62,13 @@ namespace Boi {
    undo=ButtonAt(taskPage,"Undo last delete",72,312,164,30,()=>{if(deleted==null)return;pet.Data.Tasks.Insert(Math.Min(deletedAt,pet.Data.Tasks.Count),deleted);deleted=null;undo.Enabled=false;pet.Save();BuildTasks();});undo.Enabled=false;
    settingsPage.AutoScroll=true;LabelAt(settingsPage,"A little cat. A little company.",11,FontStyle.Bold,0,4,300,32,ContentAlignment.MiddleLeft);
    Setting("Gentle timer sound",pet.Data.Sound,42,b=>pet.Data.Sound=b);Setting("Reduced motion",pet.Data.ReducedMotion,73,b=>pet.Data.ReducedMotion=b);Setting("Pause roaming",pet.Data.PauseRoaming,104,b=>pet.Data.PauseRoaming=b);
-   LabelAt(settingsPage,"Try an expression",10,FontStyle.Bold,0,145,300,28,ContentAlignment.MiddleLeft);int i=0;foreach(string name in CatAnimation.States){string reaction=name;var b=ButtonAt(settingsPage,name,(i%3)*101,180+(i/3)*36,95,29,()=>pet.React(reaction));b.Font=new Font("Comic Sans MS",8);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;i++;}
-   ButtonAt(settingsPage,"Hide cat",0,411,144,33,()=>pet.ToggleHidden());ButtonAt(settingsPage,"Quit boi_1",153,411,144,33,()=>pet.Quit());
-   LabelAt(settingsPage,"Ctrl + Alt + B opens tools.\nYour tasks stay on this computer.",8,FontStyle.Regular,0,454,300,46,ContentAlignment.MiddleLeft);
-   var credits=new LinkLabel{Text="Open-source credits",LinkColor=muted,BackColor=Color.Transparent,AutoSize=false,Font=new Font("Comic Sans MS",8)};Place(credits,0,508,300,28);settingsPage.Controls.Add(credits);credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");
+   Setting("Show corner counter",pet.Data.ShowCounter,135,b=>pet.Data.ShowCounter=b);
+   Setting("Remind me to look away every 20 min",pet.Data.EyeBreaks,166,b=>pet.Data.EyeBreaks=b);
+   Setting("Stay visible over fullscreen apps",pet.Data.AboveFullscreen,197,b=>pet.Data.AboveFullscreen=b);
+   LabelAt(settingsPage,"Try an expression",10,FontStyle.Bold,0,238,300,28,ContentAlignment.MiddleLeft);int i=0;foreach(string name in CatAnimation.States){string reaction=name;var b=ButtonAt(settingsPage,name,(i%3)*101,273+(i/3)*36,95,29,()=>pet.React(reaction));b.Font=new Font("Comic Sans MS",8);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;i++;}
+   ButtonAt(settingsPage,"Hide cat",0,504,144,33,()=>pet.ToggleHidden());ButtonAt(settingsPage,"Quit boi_1",153,504,144,33,()=>pet.Quit());
+   LabelAt(settingsPage,"Ctrl + Alt + B opens tools.\nYour tasks stay on this computer.",8,FontStyle.Regular,0,547,300,46,ContentAlignment.MiddleLeft);
+   var credits=new LinkLabel{Text="Open-source credits",LinkColor=muted,BackColor=Color.Transparent,AutoSize=false,Font=new Font("Comic Sans MS",8)};Place(credits,0,601,300,28);settingsPage.Controls.Add(credits);credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");
    warning=LabelAt(this,"",7,FontStyle.Regular,55,148,289,14,ContentAlignment.MiddleCenter);
    MouseDown+=BeginDrag;MouseMove+=MoveDrag;MouseUp+=(s,e)=>dragging=false;title.MouseDown+=BeginDrag;title.MouseMove+=MoveDrag;title.MouseUp+=(s,e)=>dragging=false;
    FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;HideTools();}};KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){HideTools();e.Handled=true;}};
