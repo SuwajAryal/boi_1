@@ -58,14 +58,25 @@ namespace Boi {
   public Tools Tools;
   public readonly Stopwatch SessionCounter=new Stopwatch();
   public bool CountUp;
+  public string SessionSummary {get{
+   if(SessionCounter.ElapsedTicks==0&&!SessionCounter.IsRunning)return "Ready";
+   long minutes=(long)SessionCounter.Elapsed.TotalMinutes;
+   if(minutes==0)return "< 1 min";
+   if(minutes<60)return minutes+" min";
+   return (minutes/60)+"h "+(minutes%60)+"m";
+  }}
   public string SessionDisplay {get{
+   if(SessionCounter.ElapsedTicks==0&&!SessionCounter.IsRunning)return "Ready";
    var elapsed=SessionCounter.Elapsed;
-   return ((long)elapsed.TotalHours).ToString("00")+":"+elapsed.Minutes.ToString("00")+":"+elapsed.Seconds.ToString("00");
+   if(elapsed.TotalSeconds<1)return "< 1 sec";
+   if(elapsed.TotalHours<1)return elapsed.Minutes+":"+elapsed.Seconds.ToString("00");
+   return ((long)elapsed.TotalHours)+":"+elapsed.Minutes.ToString("00")+":"+elapsed.Seconds.ToString("00");
   }}
   public void HideCornerTimer(){eyeBreakEnds=0;Data.ShowCounter=false;Save();UpdateCounter(uptime.Elapsed.TotalSeconds);}
   CornerCounter counter;
   double nextEyeBreak, eyeBreakEnds;
   bool foregroundFullscreen;
+  IntPtr pinnedFullscreenWindow;
   NotifyIcon tray;ContextMenuStrip menu;
   System.Windows.Forms.Timer tick;Atlas expressions,walk,idle,classic,extra;
   readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
@@ -123,18 +134,22 @@ namespace Boi {
    if(moved){Clamp();Data.HomeX=Left;Save();}else OpenTools(0);
   }
   void Clamp(){var a=Screen.PrimaryScreen.WorkingArea;int min,max;RoamingLane.Bounds(a.Left,a.Width,Width,out min,out max);x=Math.Max(min,Math.Min(max,x));Location=new Point((int)x,a.Bottom-Height-3);}
-  bool IsFullscreen(){var fg=Native.GetForegroundWindow();if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
+  bool IsFullscreen(IntPtr fg){if(fg==Handle||(Tools!=null&&fg==Tools.Handle))return false;var name=new System.Text.StringBuilder(256);Native.GetClassName(fg,name,256);if(name.ToString()=="Progman"||name.ToString()=="WorkerW"||name.ToString()=="Shell_TrayWnd")return false;Native.RECT r;if(!Native.GetWindowRect(fg,out r))return false;var b=Screen.PrimaryScreen.Bounds;return r.Left<=b.Left&&r.Top<=b.Top&&r.Right>=b.Right&&r.Bottom>=b.Bottom;}
   void Step(){double now=uptime.Elapsed.TotalSeconds,dt=Math.Min(.1,now-previous);previous=now;
    if(Clock.Tick()){Complete(true);Save();}
    if(now>=nextCheck){
     nextCheck=now+.25;
     if(Program.ShowRequest.WaitOne(0))OpenTools(0);
-    foregroundFullscreen=IsFullscreen();
+    var foreground=Native.GetForegroundWindow();
+    foregroundFullscreen=IsFullscreen(foreground);
     full=foregroundFullscreen&&!Data.PinOverFullscreen;
     bool showPet=!hidden&&!full;
     if(Visible!=showPet){if(showPet)Show();else Hide();}
     UpdateCounter(now);
-    if(foregroundFullscreen&&Data.PinOverFullscreen){
+    if(!Data.PinOverFullscreen)pinnedFullscreenWindow=IntPtr.Zero;
+    // Reordering the overlay repeatedly can cover taskbar and app context menus.
+    if(foregroundFullscreen&&Data.PinOverFullscreen&&foreground!=pinnedFullscreenWindow&&!menu.Visible&&!counter.ContextMenuStrip.Visible){
+     pinnedFullscreenWindow=foreground;
      if(Visible)Native.KeepAbove(Handle);
      if(counter.Visible)Native.KeepAbove(counter.Handle);
      if(Tools!=null&&Tools.Visible)Native.KeepAbove(Tools.Handle);

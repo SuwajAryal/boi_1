@@ -15,13 +15,13 @@ namespace Boi {
   public static Clip Get(string state){
    if(state=="Walking")return new Clip("walk",0,12,12);
    int row=state=="Curious"?0:state=="Enjoying"?1:state=="Goofing"?2:state=="Celebrating"?3:-1;
-   if(row>=0)return new Clip("reactions",row*4,4,5);
+   if(row>=0)return new Clip("reactions",row*4,4,2.5);
    string[] extras={"Surprised","Confused","Proud","Yawning","Stretching","Shy","Grumpy","Affectionate"};
    int extra=Array.IndexOf(extras,state);if(extra>=0)return new Clip("extra",extra,1,1);
    if(state=="Serious")return new Clip("classic",2,1,1);
    if(state=="Sleepy")return new Clip("classic",4,1,1);
    if(state=="Dragged")return new Clip("classic",6,1,1);
-   return new Clip("idle",0,8,4);
+   return new Clip("idle",0,8,2);
   }
  }
  public static class FrameTiming {

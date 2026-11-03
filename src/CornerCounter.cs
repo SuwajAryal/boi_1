@@ -11,7 +11,7 @@ namespace Boi {
   readonly Font digits = new Font("Segoe UI",18,FontStyle.Bold);
   string caption="", value="";
   float progress;
-  bool hovered;
+  bool hovered, glossy;
   Rectangle CloseArea {get{return new Rectangle(Width-34,Height/2-12,24,24);}}
 
   public CornerCounter(Pet pet) {
@@ -60,13 +60,16 @@ namespace Boi {
   protected override void OnPaint(PaintEventArgs e) {
    var g=e.Graphics;
    g.SmoothingMode=SmoothingMode.AntiAlias;
-   g.Clear(Color.FromArgb(255,248,233));
+   if(glossy){
+    using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(225,238,247),LinearGradientMode.Vertical))
+     g.FillRectangle(glaze,ClientRectangle);
+   }else g.Clear(Color.FromArgb(255,248,233));
    using(var edge=new Pen(Color.FromArgb(198,213,235),2))
    using(var outline=SoftShape.Pill(new Rectangle(1,1,Width-2,Height-2)))
     g.DrawPath(edge,outline);
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
    TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
-   TextRenderer.DrawText(g,value,digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(44,62,96),center);
+   TextRenderer.DrawText(g,value,digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(82,103,129):Color.FromArgb(44,62,96),center);
    if(hovered){
     var close=CloseArea;
     using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
@@ -84,10 +87,11 @@ namespace Boi {
    var clock=pet.Clock;
    string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":pet.CountUp?"SESSION COUNTER":clock.State==ClockState.Running?"FOCUS TIME":
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
-   string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
+   bool nextGlossy=eyeSeconds==0&&pet.CountUp;
+   string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionSummary:clock.Display;
    float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
-   if(caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
-    caption=nextCaption;value=nextValue;progress=nextProgress;
+   if(glossy!=nextGlossy||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
+    glossy=nextGlossy;caption=nextCaption;value=nextValue;progress=nextProgress;
     AccessibleName=caption+" "+value;
     Invalidate();
    }
