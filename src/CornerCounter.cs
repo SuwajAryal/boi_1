@@ -12,7 +12,7 @@ namespace Boi {
   readonly Font quietDigits = new Font("Segoe UI",13,FontStyle.Bold);
   string caption="", value="";
   float progress;
-  bool hovered, glossy;
+  bool hovered, countUp;
   Rectangle CloseArea {get{return new Rectangle(Width-34,Height/2-12,24,24);}}
 
   public CornerCounter(Pet pet) {
@@ -21,6 +21,7 @@ namespace Boi {
    FormBorderStyle=FormBorderStyle.None;
    ShowInTaskbar=false;
    TopMost=true;
+   Opacity=.76;
    StartPosition=FormStartPosition.Manual;
    AutoScaleMode=AutoScaleMode.None;
    DoubleBuffered=true;
@@ -61,21 +62,23 @@ namespace Boi {
   protected override void OnPaint(PaintEventArgs e) {
    var g=e.Graphics;
    g.SmoothingMode=SmoothingMode.AntiAlias;
-   if(glossy){
-    using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(211,231,247),LinearGradientMode.Vertical)){
-     glaze.InterpolationColors=new ColorBlend {
-      Colors=new[]{Color.White,Color.FromArgb(241,249,255),Color.FromArgb(220,237,250),Color.FromArgb(211,231,247)},
-      Positions=new[]{0f,.38f,.52f,1f}
-     };
-     g.FillRectangle(glaze,ClientRectangle);
-    }
-   }else g.Clear(Color.FromArgb(255,248,233));
-   using(var edge=new Pen(glossy?Color.FromArgb(169,196,223):Color.FromArgb(198,213,235),2))
+   using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(177,208,235),LinearGradientMode.Vertical)){
+    glaze.InterpolationColors=new ColorBlend {
+     Colors=new[]{Color.FromArgb(251,254,255),Color.FromArgb(227,244,255),Color.FromArgb(190,219,244),Color.FromArgb(215,236,252)},
+     Positions=new[]{0f,.35f,.49f,1f}
+    };
+    g.FillRectangle(glaze,ClientRectangle);
+   }
+   using(var edge=new Pen(Color.FromArgb(126,166,203),2))
    using(var outline=SoftShape.Pill(new Rectangle(1,1,Width-2,Height-2)))
     g.DrawPath(edge,outline);
+   using(var shine=new Pen(Color.FromArgb(252,255,255),2)){
+    shine.StartCap=shine.EndCap=LineCap.Round;
+    g.DrawLine(shine,Width/4,Height/9,Width*3/4,Height/9);
+   }
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
    TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
-   TextRenderer.DrawText(g,value,glossy?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(48,76,107):Color.FromArgb(44,62,96),center);
+   TextRenderer.DrawText(g,value,countUp?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(40,69,104),center);
    if(hovered){
     var close=CloseArea;
     using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
@@ -93,12 +96,11 @@ namespace Boi {
    var clock=pet.Clock;
    string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":pet.CountUp?"SESSION COUNTER":clock.State==ClockState.Running?"FOCUS TIME":
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
-   bool nextGlossy=eyeSeconds==0&&pet.CountUp;
+   bool nextCountUp=eyeSeconds==0&&pet.CountUp;
    string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
    float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
-   if(glossy!=nextGlossy||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
-    if(glossy!=nextGlossy)Opacity=nextGlossy?.80:1;
-    glossy=nextGlossy;caption=nextCaption;value=nextValue;progress=nextProgress;
+   if(countUp!=nextCountUp||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
+    countUp=nextCountUp;caption=nextCaption;value=nextValue;progress=nextProgress;
     AccessibleName=caption+" "+value;
     Invalidate();
    }
