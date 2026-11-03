@@ -21,7 +21,7 @@ namespace Boi {
    FormBorderStyle=FormBorderStyle.None;
    ShowInTaskbar=false;
    TopMost=true;
-   Opacity=.76;
+   Opacity=.50;
    StartPosition=FormStartPosition.Manual;
    AutoScaleMode=AutoScaleMode.None;
    DoubleBuffered=true;
@@ -77,8 +77,8 @@ namespace Boi {
     g.DrawLine(shine,Width/4,Height/9,Width*3/4,Height/9);
    }
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
-   TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
-   TextRenderer.DrawText(g,value,countUp?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(40,69,104),center);
+   TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(26,47,76),center);
+   TextRenderer.DrawText(g,value,countUp?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(15,36,65),center);
    if(hovered){
     var close=CloseArea;
     using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
