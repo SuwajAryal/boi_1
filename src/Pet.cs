@@ -71,6 +71,8 @@ namespace Boi {
   bool foregroundFullscreen;
   IntPtr pinnedFullscreenWindow;
   NotifyIcon tray;ContextMenuStrip menu;
+  readonly NativeWindow trayMenuOwner=new NativeWindow();
+  bool trayMenuOpen;
   System.Windows.Forms.Timer tick;Atlas expressions,walk,idle,classic,extra;
   readonly Stopwatch uptime=Stopwatch.StartNew();readonly Random random=new Random();
   double previous,x,decisionAt,playUntil,nextCheck,animationStart;int direction=-1;string activity="Idle",preview="",animationState="";
@@ -93,9 +95,13 @@ namespace Boi {
    menu.Items.Add("Expressions & settings",null,(s,e)=>OpenTools(2));menu.Items.Add(new ToolStripSeparator());
    menu.Items.Add("Pause / resume roaming",null,(s,e)=>{Data.PauseRoaming=!Data.PauseRoaming;Save();});
    menu.Items.Add("Show / hide cat",null,(s,e)=>ToggleHidden());menu.Items.Add("Quit boi_1",null,(s,e)=>Quit());
-   tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true,ContextMenuStrip=menu};
+   tray=new NotifyIcon{Icon=SystemIcons.Information,Text="boi_1 - click for timer & tasks",Visible=true};
    using(var tiny=new Bitmap(idle.Frames[0],32,32)){IntPtr handle=tiny.GetHicon();using(var icon=Icon.FromHandle(handle))catIcon=(Icon)icon.Clone();Native.DestroyIcon(handle);}tray.Icon=catIcon;
-   tray.MouseClick+=(s,e)=>{if(e.Button==MouseButtons.Left)OpenTools(0);};
+   trayMenuOwner.CreateHandle(new CreateParams{Style=unchecked((int)0x80000000),ExStyle=0x80});
+   tray.MouseClick+=(s,e)=>{
+    if(e.Button==MouseButtons.Left)OpenTools(0);
+    else if(e.Button==MouseButtons.Right)BeginInvoke((Action)ShowTrayMenu);
+   };
    counter=new CornerCounter(this);
    MouseDown+=OnDown;MouseMove+=OnMove;MouseUp+=OnUp;
    tick=new System.Windows.Forms.Timer{Interval=16};tick.Tick+=(s,e)=>Step();
@@ -121,6 +127,17 @@ namespace Boi {
   }
   void DisplayChanged(object s,EventArgs e){if(IsHandleCreated&&!IsDisposed)BeginInvoke((Action)(()=>{Clamp();Render();}));}
   protected override void WndProc(ref Message m){if(m.Msg==0x21){m.Result=new IntPtr(3);return;}if(m.Msg==0x312||m.Msg==(int)Program.Wake){OpenTools(0);return;}base.WndProc(ref m);}
+  void ShowTrayMenu(){
+   if(trayMenuOpen||quitting)return;
+   var labels=new string[menu.Items.Count];
+   for(int i=0;i<labels.Length;i++)
+    if(!(menu.Items[i] is ToolStripSeparator))labels[i]=menu.Items[i].Text;
+   int selected;
+   trayMenuOpen=true;
+   try { selected=Native.ShowTrayMenu(trayMenuOwner.Handle,Cursor.Position,labels); }
+   finally { trayMenuOpen=false; }
+   if(selected>0)menu.Items[selected-1].PerformClick();
+  }
   void OnDown(object s,MouseEventArgs e){if(e.Button!=MouseButtons.Left)return; down=true;moved=false;downCursor=Cursor.Position;downLocation=Location;Capture=true;lastInteraction=uptime.Elapsed.TotalSeconds;}
   void OnMove(object s,MouseEventArgs e){if(!down)return;var d=new Point(Cursor.Position.X-downCursor.X,Cursor.Position.Y-downCursor.Y);if(Math.Abs(d.X)+Math.Abs(d.Y)>6){dragging=true;moved=true;Location=new Point(downLocation.X+d.X,downLocation.Y+d.Y);x=Left;Render();}}
   void OnUp(object s,MouseEventArgs e){if(e.Button==MouseButtons.Right){menu.Show(Cursor.Position);return;}if(e.Button!=MouseButtons.Left)return; down=false;dragging=false;Capture=false;lastInteraction=uptime.Elapsed.TotalSeconds;preview="";
@@ -141,7 +158,7 @@ namespace Boi {
     UpdateCounter(now);
     if(!Data.PinOverFullscreen)pinnedFullscreenWindow=IntPtr.Zero;
     // Reordering the overlay repeatedly can cover taskbar and app context menus.
-    if(foregroundFullscreen&&Data.PinOverFullscreen&&foreground!=pinnedFullscreenWindow&&!menu.Visible&&!counter.ContextMenuStrip.Visible){
+    if(foregroundFullscreen&&Data.PinOverFullscreen&&foreground!=pinnedFullscreenWindow&&!trayMenuOpen&&!menu.Visible&&!counter.ContextMenuStrip.Visible){
      pinnedFullscreenWindow=foreground;
      if(Visible)Native.KeepAbove(Handle);
      if(counter.Visible)Native.KeepAbove(counter.Handle);
@@ -203,6 +220,6 @@ namespace Boi {
    }
    return b;
   }
-  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();menu.Dispose();counter.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
+  protected override void Dispose(bool disposing){if(disposing){tick.Stop();tick.Dispose();Native.UnregisterHotKey(Handle,1);Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=DisplayChanged;tray.Visible=false;tray.Dispose();trayMenuOwner.DestroyHandle();menu.Dispose();counter.Dispose();catIcon.Dispose();expressions.Dispose();walk.Dispose();idle.Dispose();classic.Dispose();extra.Dispose();if(cachedFrame!=null)cachedFrame.Dispose();if(Tools!=null)Tools.Dispose();}base.Dispose(disposing);}
  }
 }
