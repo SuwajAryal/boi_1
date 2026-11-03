@@ -121,7 +121,12 @@ namespace Boi {
   void SelectClock(bool countUp){pet.CountUp=countUp;RefreshState();}
   void ToggleTimer(){
    if(pet.CountUp){
-    if(pet.SessionCounter.IsRunning)pet.SessionCounter.Stop();else pet.SessionCounter.Start();
+    if(pet.SessionCounter.IsRunning)pet.SessionCounter.Stop();
+    else {
+     bool starting=pet.SessionCounter.ElapsedTicks==0;
+     pet.SessionCounter.Start();
+     if(starting&&!pet.Data.ShowCounter){pet.Data.ShowCounter=true;pet.Save();}
+    }
     RefreshState();
     return;
    }

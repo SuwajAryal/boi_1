@@ -58,13 +58,6 @@ namespace Boi {
   public Tools Tools;
   public readonly Stopwatch SessionCounter=new Stopwatch();
   public bool CountUp;
-  public string SessionSummary {get{
-   if(SessionCounter.ElapsedTicks==0&&!SessionCounter.IsRunning)return "Ready";
-   long minutes=(long)SessionCounter.Elapsed.TotalMinutes;
-   if(minutes==0)return "< 1 min";
-   if(minutes<60)return minutes+" min";
-   return (minutes/60)+"h "+(minutes%60)+"m";
-  }}
   public string SessionDisplay {get{
    if(SessionCounter.ElapsedTicks==0&&!SessionCounter.IsRunning)return "Ready";
    var elapsed=SessionCounter.Elapsed;

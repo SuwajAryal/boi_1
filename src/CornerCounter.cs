@@ -9,6 +9,7 @@ namespace Boi {
   readonly ContextMenuStrip actions;
   readonly Font heading = new Font("Segoe UI",9,FontStyle.Bold);
   readonly Font digits = new Font("Segoe UI",18,FontStyle.Bold);
+  readonly Font quietDigits = new Font("Segoe UI",13,FontStyle.Regular);
   string caption="", value="";
   float progress;
   bool hovered, glossy;
@@ -69,7 +70,7 @@ namespace Boi {
     g.DrawPath(edge,outline);
    var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
    TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(87,104,137),center);
-   TextRenderer.DrawText(g,value,digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(82,103,129):Color.FromArgb(44,62,96),center);
+   TextRenderer.DrawText(g,value,glossy?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),glossy?Color.FromArgb(82,103,129):Color.FromArgb(44,62,96),center);
    if(hovered){
     var close=CloseArea;
     using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
@@ -88,7 +89,7 @@ namespace Boi {
    string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":pet.CountUp?"SESSION COUNTER":clock.State==ClockState.Running?"FOCUS TIME":
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
    bool nextGlossy=eyeSeconds==0&&pet.CountUp;
-   string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionSummary:clock.Display;
+   string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
    float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
    if(glossy!=nextGlossy||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
     glossy=nextGlossy;caption=nextCaption;value=nextValue;progress=nextProgress;
@@ -101,7 +102,7 @@ namespace Boi {
   }
 
   protected override void Dispose(bool disposing) {
-   if(disposing){actions.Dispose();heading.Dispose();digits.Dispose();}
+   if(disposing){actions.Dispose();heading.Dispose();digits.Dispose();quietDigits.Dispose();}
    base.Dispose(disposing);
   }
  }
