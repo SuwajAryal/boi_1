@@ -27,9 +27,9 @@ State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with ato
 ## First version
 
 - One countdown timer with start, pause, resume, reset, and a gentle completion alert.
-- A corner tally with + and − buttons, a live countdown when the timer is running, and a right-click reset. The tally is saved locally.
+- A corner focus badge with a live countdown. Click to open the timer. Right-click to adjust or reset the saved tally.
 - Optional eye breaks every 20 minutes while boi_1 is open. The corner badge prompts you to look into the distance for 20 seconds.
-- Optional fullscreen visibility for the cat and counter in borderless apps. Exclusive fullscreen can prevent desktop overlays from appearing. Find all three options in Settings.
+- Fullscreen visibility enabled by default for the cat and counter in borderless apps. Exclusive fullscreen can prevent desktop overlays from appearing. Find all three options in Settings.
 - One to-do list with add, edit, complete, reopen, delete, and undo.
 - A roaming cat with frame-by-frame idle, walk and reactions; tray access and a show/hide shortcut.
 - Local saving, optional sound, and reduced motion.

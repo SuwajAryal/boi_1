@@ -24,6 +24,8 @@ namespace Boi {
   [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr hwnd,int id);
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern uint RegisterWindowMessage(string name);
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern bool PostMessage(IntPtr hwnd,uint msg,IntPtr w,IntPtr l);
+  [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr hwnd,IntPtr after,int x,int y,int cx,int cy,uint flags);
+  public static void KeepAbove(IntPtr hwnd) { SetWindowPos(hwnd,new IntPtr(-1),0,0,0,0,0x0013); }
   public static void Present(IntPtr hwnd,Bitmap bitmap,Point location) {
    IntPtr screen=GetDC(IntPtr.Zero),dc=CreateCompatibleDC(screen),hb=IntPtr.Zero,old=IntPtr.Zero;
    try { hb=bitmap.GetHbitmap(Color.FromArgb(0)); old=SelectObject(dc,hb);

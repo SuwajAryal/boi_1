@@ -42,7 +42,7 @@ namespace Boi {
   public ClockState TimerState; public int Minutes = 25;
   public double Remaining; public DateTime DeadlineUtc;
   public bool Sound = true, ReducedMotion, PauseRoaming;
-  public bool ShowCounter = true, EyeBreaks, AboveFullscreen;
+  public bool ShowCounter = true, EyeBreaks, PinOverFullscreen = true;
   public int Count;
   public int HomeX = -1;
  }

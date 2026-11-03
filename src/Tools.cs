@@ -22,7 +22,7 @@ namespace Boi {
    Color ink=Enabled?Ink:Color.FromArgb(153,168,190);var bounds=ClientRectangle;
    if(Glyph.Length>0&&IconFont!=null){int iconWidth=Text.Length==0?Width:(int)(IconFont.SizeInPoints*2.3);var iconBounds=Text.Length==0?bounds:new Rectangle(Width/5,0,iconWidth,Height);TextRenderer.DrawText(e.Graphics,Glyph,IconFont,iconBounds,ink,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter);if(Text.Length>0)bounds=new Rectangle(Width/5+iconWidth,0,Width*3/5-iconWidth,Height);}
    if(Text.Length>0)TextRenderer.DrawText(e.Graphics,Text,Font,bounds,ink,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
-   if(Focused)ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(6,6,Width-12,Height-12),Ink,Fill);
+   if(Focused&&ShowFocusCues)using(var focus=new Pen(Ink,1.5f))using(var ring=SoftShape.Pill(new Rectangle(4,4,Width-8,Height-8)))e.Graphics.DrawPath(focus,ring);
   }
  }
  sealed class SoftField : Panel {
@@ -46,14 +46,15 @@ namespace Boi {
    timerTab=ButtonAt(this,"Timer",47,108,153,40,()=>SelectPage(0));timerTab.Glyph="\uf017";timerTab.IconFont=iconFont;
    taskTab=ButtonAt(this,"Tasks",200,108,153,40,()=>SelectPage(1));taskTab.Glyph="\uf03a";taskTab.IconFont=iconFont;
    timerPage=Page();taskPage=Page();settingsPage=Page();settingsPage.Width=S(320);
-   LabelAt(timerPage,"A little time for you",12,FontStyle.Regular,4,10,300,38,ContentAlignment.MiddleCenter);
-   time=LabelAt(timerPage,"25:00",44,FontStyle.Bold,0,64,308,93,ContentAlignment.MiddleCenter);time.Font=new Font("Segoe UI",44,FontStyle.Bold);
+   LabelAt(timerPage,"A little time to focus",12,FontStyle.Regular,4,16,300,35,ContentAlignment.MiddleCenter);
+   var timerCard=new SoftField();Place(timerCard,39,56,230,97);timerPage.Controls.Add(timerCard);
+   time=LabelAt(timerCard,"25:00",39,FontStyle.Bold,3,0,224,95,ContentAlignment.MiddleCenter);time.Font=new Font("Segoe UI",39,FontStyle.Bold);
    status=LabelAt(timerPage,"Ready when you are.",8,FontStyle.Regular,0,155,308,22,ContentAlignment.MiddleCenter);
    int presetX=4;foreach(int n in new[]{5,15,25}){int v=n;ButtonAt(timerPage,n+" min",presetX,180,96,35,()=>SetMinutes(v));presetX+=102;}
    LabelAt(timerPage,"Custom minutes",9,FontStyle.Regular,15,227,165,31,ContentAlignment.MiddleLeft);
    var duration=new SoftField();Place(duration,175,225,122,33);timerPage.Controls.Add(duration);minutes=new NumericUpDown{Minimum=1,Maximum=180,Value=pet.Clock.Minutes,BorderStyle=BorderStyle.None,BackColor=Color.FromArgb(255,253,249),ForeColor=ink,AccessibleName="Custom timer minutes",Font=Font};Place(minutes,11,6,101,24);duration.Controls.Add(minutes);
    minutes.ValueChanged+=(s,e)=>{if(pet.Clock.State==ClockState.Idle){pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();}};
-   primary=ButtonAt(timerPage,"Start timer",1,269,306,40,ToggleTimer);primary.Fill=blue;primary.Edge=Color.FromArgb(86,157,230);primary.Ink=Color.White;primary.Font=new Font("Comic Sans MS",12,FontStyle.Bold);primary.Glyph="\uf04b";primary.IconFont=iconFont;
+   primary=ButtonAt(timerPage,"Start focus",1,269,306,40,ToggleTimer);primary.Fill=blue;primary.Edge=Color.FromArgb(86,157,230);primary.Ink=Color.White;primary.Font=new Font("Comic Sans MS",12,FontStyle.Bold);primary.Glyph="\uf04b";primary.IconFont=iconFont;
    var reset=ButtonAt(timerPage,"Reset",109,314,90,24,()=>{pet.Clock.Reset((int)minutes.Value);pet.Save();RefreshState();});reset.Fill=paper;reset.Edge=paper;reset.Font=new Font("Comic Sans MS",9);
    LabelAt(taskPage,"One small thing at a time.",12,FontStyle.Bold,1,8,306,40,ContentAlignment.MiddleLeft);
    var entry=new SoftField();Place(entry,0,58,238,34);taskPage.Controls.Add(entry);input=new TextBox{BorderStyle=BorderStyle.None,MaxLength=200,BackColor=Color.FromArgb(255,253,249),ForeColor=ink,Font=Font,AccessibleName="New task"};Place(input,12,7,213,24);entry.Controls.Add(input);ButtonAt(taskPage,"Add",245,58,63,34,AddTask);input.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){AddTask();e.SuppressKeyPress=true;}};
@@ -62,14 +63,15 @@ namespace Boi {
    undo=ButtonAt(taskPage,"Undo last delete",72,312,164,30,()=>{if(deleted==null)return;pet.Data.Tasks.Insert(Math.Min(deletedAt,pet.Data.Tasks.Count),deleted);deleted=null;undo.Enabled=false;pet.Save();BuildTasks();});undo.Enabled=false;
    settingsPage.AutoScroll=true;LabelAt(settingsPage,"A little cat. A little company.",11,FontStyle.Bold,0,4,300,32,ContentAlignment.MiddleLeft);
    Setting("Gentle timer sound",pet.Data.Sound,42,b=>pet.Data.Sound=b);Setting("Reduced motion",pet.Data.ReducedMotion,73,b=>pet.Data.ReducedMotion=b);Setting("Pause roaming",pet.Data.PauseRoaming,104,b=>pet.Data.PauseRoaming=b);
-   Setting("Show corner counter",pet.Data.ShowCounter,135,b=>pet.Data.ShowCounter=b);
+   Setting("Show corner focus timer",pet.Data.ShowCounter,135,b=>pet.Data.ShowCounter=b);
    Setting("Remind me to look away every 20 min",pet.Data.EyeBreaks,166,b=>pet.Data.EyeBreaks=b);
-   Setting("Stay visible over fullscreen apps",pet.Data.AboveFullscreen,197,b=>pet.Data.AboveFullscreen=b);
+   Setting("Stay visible over fullscreen apps",pet.Data.PinOverFullscreen,197,b=>pet.Data.PinOverFullscreen=b);
    LabelAt(settingsPage,"Try an expression",10,FontStyle.Bold,0,238,300,28,ContentAlignment.MiddleLeft);int i=0;foreach(string name in CatAnimation.States){string reaction=name;var b=ButtonAt(settingsPage,name,(i%3)*101,273+(i/3)*36,95,29,()=>pet.React(reaction));b.Font=new Font("Comic Sans MS",8);b.Enabled=name!="Walking"||CatAnimation.WalkCycleVerified;i++;}
    ButtonAt(settingsPage,"Hide cat",0,504,144,33,()=>pet.ToggleHidden());ButtonAt(settingsPage,"Quit boi_1",153,504,144,33,()=>pet.Quit());
    LabelAt(settingsPage,"Ctrl + Alt + B opens tools.\nYour tasks stay on this computer.",8,FontStyle.Regular,0,547,300,46,ContentAlignment.MiddleLeft);
    var credits=new LinkLabel{Text="Open-source credits",LinkColor=muted,BackColor=Color.Transparent,AutoSize=false,Font=new Font("Comic Sans MS",8)};Place(credits,0,601,300,28);settingsPage.Controls.Add(credits);credits.LinkClicked+=(s,e)=>System.Diagnostics.Process.Start("https://github.com/SuwajAryal/boi_1/blob/main/CREDITS.md");
-   warning=LabelAt(this,"",7,FontStyle.Regular,55,148,289,14,ContentAlignment.MiddleCenter);
+   warning=LabelAt(this,"",7,FontStyle.Regular,76,484,248,22,ContentAlignment.MiddleCenter);
+   warning.BringToFront();
    MouseDown+=BeginDrag;MouseMove+=MoveDrag;MouseUp+=(s,e)=>dragging=false;title.MouseDown+=BeginDrag;title.MouseMove+=MoveDrag;title.MouseUp+=(s,e)=>dragging=false;
    FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;HideTools();}};KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){HideTools();e.Handled=true;}};
    BuildTasks();SelectPage(0);RefreshState();
@@ -91,7 +93,7 @@ namespace Boi {
   public void SelectPage(int index){selectedPage=index;timerPage.Visible=index==0;taskPage.Visible=index==1;settingsPage.Visible=index==2;timerTab.Fill=index==0?Color.FromArgb(206,230,255):Color.FromArgb(250,251,254);taskTab.Fill=index==1?Color.FromArgb(206,230,255):Color.FromArgb(250,251,254);gear.Fill=index==2?Color.FromArgb(206,230,255):Color.FromArgb(234,244,255);timerTab.Invalidate();taskTab.Invalidate();gear.Invalidate();}
   void Snapshot(string folder,string name){Refresh();Application.DoEvents();using(var b=new Bitmap(Width,Height)){DrawToBitmap(b,new Rectangle(0,0,Width,Height));for(int y=0;y<b.Height;y++)for(int x=0;x<b.Width;x++)if(!Region.IsVisible(x,y))b.SetPixel(x,y,Color.Transparent);b.Save(Path.Combine(folder,name));}}
   public void RunSmoke(string folder){pet.Clock.Reset(1);minutes.Value=1;RefreshState();primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Start failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Paused)throw new Exception("Pause failed");primary.PerformClick();if(pet.Clock.State!=ClockState.Running)throw new Exception("Resume failed");Snapshot(folder,"timer.png");pet.Clock.Reset(25);minutes.Value=25;pet.Save();SelectPage(1);input.Text="Read a chapter";AddTask();input.Text="Water the plant";AddTask();var task=pet.Data.Tasks.Last();task.Done=true;pet.Save();done.Checked=true;BuildTasks();Snapshot(folder,"tasks.png");task.Title="Water the plant tomorrow";pet.Save();deleted=task;deletedAt=pet.Data.Tasks.IndexOf(task);pet.Data.Tasks.Remove(task);undo.Enabled=true;undo.PerformClick();if(!pet.Data.Tasks.Contains(task))throw new Exception("Undo failed");SelectPage(2);pet.React("Goofing");if(pet.Status!="Goofing")throw new Exception("Preview failed");pet.Data.ReducedMotion=true;pet.Save();Snapshot(folder,"settings.png");pet.Data.ReducedMotion=false;pet.Save();}
-  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start timer";primary.Glyph=pet.Clock.State==ClockState.Running?"\uf04c":"\uf04b";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.ForeColor=pet.Storage.Warning.Length>0?Color.Firebrick:muted;warning.Text=pet.Storage.Warning.Length>0?pet.Storage.Warning:pet.Clock.State==ClockState.Running?"Timer running "+pet.Clock.Display+" - you can hide this cloud.":"Your little cloud of calm.";}
+  public void RefreshState(){time.Text=pet.Clock.Display;primary.Text=pet.Clock.State==ClockState.Running?"Pause":pet.Clock.State==ClockState.Paused?"Resume":pet.Clock.State==ClockState.Finished?"Done - reset":"Start focus";primary.Glyph=pet.Clock.State==ClockState.Running?"\uf04c":"\uf04b";status.Text=pet.Clock.State==ClockState.Finished?"All done. Take a little stretch.":pet.Clock.State==ClockState.Running?"I'm focusing with you.":pet.Clock.State==ClockState.Paused?"Paused. No rush.":"Ready when you are.";minutes.Enabled=pet.Clock.State==ClockState.Idle;warning.ForeColor=pet.Storage.Warning.Length>0?Color.Firebrick:muted;warning.Text=pet.Storage.Warning;warning.Visible=warning.Text.Length>0;}
   protected override void Dispose(bool disposing){if(disposing){cloud.Dispose();cloudScaled.Dispose();iconFont.Dispose();icons.Dispose();}base.Dispose(disposing);}
  }
 }

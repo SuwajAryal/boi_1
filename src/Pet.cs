@@ -123,11 +123,16 @@ namespace Boi {
     nextCheck=now+.25;
     if(Program.ShowRequest.WaitOne(0))OpenTools(0);
     foregroundFullscreen=IsFullscreen();
-    full=foregroundFullscreen&&!Data.AboveFullscreen;
+    full=foregroundFullscreen&&!Data.PinOverFullscreen;
     bool showPet=!hidden&&!full;
     if(Visible!=showPet){if(showPet)Show();else Hide();}
     UpdateCounter(now);
-    if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();
+    if(foregroundFullscreen&&Data.PinOverFullscreen){
+     if(Visible)Native.KeepAbove(Handle);
+     if(counter.Visible)Native.KeepAbove(counter.Handle);
+     if(Tools!=null&&Tools.Visible)Native.KeepAbove(Tools.Handle);
+    }
+    if(Tools!=null&&!Tools.IsDisposed){Tools.TopMost=Data.PinOverFullscreen;Tools.RefreshState();}
    }
    if(hidden||full)return;
    bool hovering=Bounds.Contains(Cursor.Position),tools=Tools!=null&&Tools.Visible;
@@ -157,14 +162,14 @@ namespace Boi {
    }
    int eyeSeconds=(int)Math.Ceiling(Math.Max(0,eyeBreakEnds-now));
    var screen=Screen.PrimaryScreen;
-   var area=Data.AboveFullscreen&&foregroundFullscreen?screen.Bounds:screen.WorkingArea;
+   var area=Data.PinOverFullscreen&&foregroundFullscreen?screen.Bounds:screen.WorkingArea;
    int bottom=hidden?area.Bottom:Math.Min(area.Bottom,Top);
    counter.UpdateDisplay(Rectangle.FromLTRB(area.Left,area.Top,area.Right,bottom),eyeSeconds,!full&&(Data.ShowCounter||eyeSeconds>0));
   }
   public void React(string state){preview=state;playUntil=uptime.Elapsed.TotalSeconds+(state=="Sleepy"?8:4);lastInteraction=uptime.Elapsed.TotalSeconds;Render();}
   public void Complete(bool sound){React("Celebrating");if(sound&&Data.Sound)System.Media.SystemSounds.Asterisk.Play();tray.Text="boi_1 - timer finished";}
-  public void Save(){Clock.Export(Data);Storage.Save(Data);if(Tools!=null&&!Tools.IsDisposed)Tools.RefreshState();}
-  public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);var a=Screen.PrimaryScreen.WorkingArea;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,Left+Width-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
+  public void Save(){Clock.Export(Data);Storage.Save(Data);if(Tools!=null&&!Tools.IsDisposed){Tools.TopMost=Data.PinOverFullscreen;Tools.RefreshState();}}
+  public void OpenTools(int page){Program.Trace("Open tools");preview="";lastInteraction=uptime.Elapsed.TotalSeconds;if(Tools==null||Tools.IsDisposed)Tools=new Tools(this);Tools.SelectPage(page);Tools.TopMost=Data.PinOverFullscreen;var a=Screen.PrimaryScreen.WorkingArea;int right=counter.Visible&&counter.Left-12-Tools.Width>=a.Left?counter.Left-12:Left+Width;Tools.Location=new Point(Math.Max(a.Left,Math.Min(a.Right-Tools.Width,right-Tools.Width)),Math.Max(a.Top,a.Bottom-Height-Tools.Height-10));Tools.Show();Tools.Activate();Program.Trace("Tools visible: "+Tools.Visible);}
   public void ToggleHidden(){hidden=!hidden;if(hidden){Hide();if(Tools!=null)Tools.Hide();}else {Clamp();if(!full)Show();Render();} }
   public void Quit(){if(Clock.State==ClockState.Running&&MessageBox.Show("Your timer will be saved, but cannot alert while boi_1 is closed. Quit?","boi_1",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;Save();quitting=true;Close();}
   void Render(){if(!IsHandleCreated||hidden||full)return;string state=dragging?"Dragged":preview!=""?preview:activity;if(animationState!=state){animationState=state;animationStart=uptime.Elapsed.TotalSeconds;}double seconds=uptime.Elapsed.TotalSeconds-animationStart;Clip clip=CatAnimation.Get(state);string key=state+":"+FrameTiming.Index(seconds,clip.Count,clip.Fps,Data.ReducedMotion)+":"+direction+":"+Width+":"+Height;bool changed=key!=cachedKey;
