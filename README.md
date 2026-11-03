@@ -1,60 +1,51 @@
-# boi_1
+# boi_1 🐾
 
-The selected blue cloud tools interface is implemented on main: cloud-shaped popup, rounded blue timer/task tabs and controls, settings icon, close/hide control, and licensed icons. Source and artwork are saved in this repository. Core checks and native-form smoke checks pass. A live-only button-background issue was fixed after inspection, but the user stopped the final visual recheck with Escape; that last verification remains incomplete. Walking remains disabled pending a reliable gait correction.
+**A sleepy desktop cat for getting little things done.**
 
-A cream-tabby anime cat for keeping you company and getting small things done.
+boi lives near the Windows system tray. Click the cat to open a little cloud of tools, start a focus session, or jot down what you want to do next. A clear glass bubble keeps your time in sight while the cat keeps you company.
 
-**Status: first native Windows test build. Core and native-form checks pass; live desktop verification is incomplete.**
+<p align="center">
+  <img src="docs/media/boi-idle.png" width="125" alt="boi, a sleepy cream tabby with a curled tail">
+  <img src="docs/media/focus-timer.png" width="315" alt="boi_1's cloud-shaped focus panel with a countdown and a Counter tab">
+</p>
 
-Current correction: walking is temporarily disabled in new builds after the owner reported incorrect leg placement. The gait is not fixed yet. Idle and other expressions remain available. Three cloud-themed popup designs await selection before implementation; see docs/CLOUD-UI-REVISION.md. Older running builds are unchanged.
+## What boi can do
 
-Selected mascot: the original cream tabby, restored after the bunny was rejected. There are 8 idle frames, 12 walking frames, and 16 reaction frames. Elapsed-time playback and shared scale/ground anchors reduce jitter. Static-pose rotation and artificial bobbing are removed. Generated drawings still have some shape drift; this is a test animation, not a hand-polished production cycle.
+| Feature | How it works |
+| --- | --- |
+| **Focus timer** | Pick 5, 15, or 25 minutes, or set your own duration. The corner bubble shows the countdown while you work. |
+| **Session counter** | Switch to **Counter** to count up from the start of a session. Pause, resume, or reset whenever you like. |
+| **Little to-do list** | Add, edit, and check off tasks. You can reopen finished tasks or undo the last deletion. |
+| **Eye breaks** | Turn on a reminder to look into the distance for 20 seconds every 20 minutes. |
+| **Desktop company** | boi blinks, reacts, and gets sleepy. Try the expressions in Settings or turn on reduced motion. |
 
-Roaming and drag-release recovery stay in the rightmost 15% of the primary monitor's work area, above the system tray. Timer/storage/lane/animation tests total 36. Alternative packs were researched but not imported; generated cat assets follow the selected template.
+Click the bubble to open the timer. Hover over it and click **×** to tuck it away while your session keeps running. Restore it in Settings. Right-click the cat or its tray icon for quick controls, or press **Ctrl + Alt + B** to open the tools.
 
-## Run the test build
+## Try it on Windows
 
-Run `./build.ps1` in PowerShell, then open `dist/cat/boi_1.exe`. Keep its assets folder beside it. Quit older boi_1 versions from their tray first. Requires Windows with .NET Framework 4.8. No modern SDK or browser engine needed. `./package.ps1` creates dist/boi_1-cat-test.zip.
+This is an unsigned hobby project for Windows with .NET Framework 4.8.
 
-Click the cat for tools, right-click for quick controls, or use Ctrl+Alt+B. `Open-boi-tools.exe` opens tools directly. Cat & settings includes state previews, reduced motion, sound, and pause roaming. Quit from the tray or tools; no startup entry is installed.
+1. Clone this repository or choose **Code → Download ZIP** and extract it.
+2. Open PowerShell in the project folder and run:
 
-Six frame sequences: idle/blink, walking, curious, enjoying, goofing and celebrating. Original focus, nap and picked-up poses are retained. Eight new still expressions: surprised, confused, proud, yawning, stretching, shy, grumpy and affectionate. All 17 states can be previewed in Cat & settings. Reduced motion freezes frames and roaming.
+   ```powershell
+   ./build.ps1
+   ```
 
-Run `./test.ps1` for 36 checks. `dist/cat/boi_1.exe --smoke-test` uses isolated data and writes evidence under dist/evidence/. `--render-preview` exports PNG loops under dist/cat/preview/; tests/export_preview.py optionally encodes GIFs with Pillow. These do not prove desktop click-through, dragging, focus, fullscreen transitions, hotkeys or sleep/wake. See [QA status](design-qa.md). Unsigned test build, not a production release.
+3. Open `dist/cat/boi_1.exe`. Keep its `assets` folder beside it. Use `Open-boi-tools.exe` in the same folder to open the tools directly.
 
-State is stored locally under `%LOCALAPPDATA%/boi_1/` as versioned XML, with atomic writes and backup recovery. No telemetry or background network calls are implemented. The credits link opens GitHub only when clicked. Primary monitor only; the initial shortcut is fixed.
+If you have an older copy running, choose **Quit boi_1** from its tray menu before launching a new build. Run `./package.ps1` to make a portable ZIP locally.
 
-## First version
+## A few details
 
-- One countdown timer with start, pause, resume, reset, and a gentle completion alert.
-- A corner focus badge with a live countdown. Click to open the timer or hover and click × to hide the badge. Turn it back on in Settings. Right-click to adjust or reset the saved tally.
-- Switch to Counter for a count-up session stopwatch with start, pause, resume, and reset. It tracks the current app session independently of the countdown.
-- Optional eye breaks every 20 minutes while boi_1 is open. The corner badge prompts you to look into the distance for 20 seconds.
-- Fullscreen visibility enabled by default for the cat and counter in borderless apps. Exclusive fullscreen can prevent desktop overlays from appearing. Find all three options in Settings.
-- One to-do list with add, edit, complete, reopen, delete, and undo.
-- A roaming cat with frame-by-frame idle, walk and reactions; tray access and a show/hide shortcut.
-- Local saving, optional sound, and reduced motion.
+- boi works offline. Tasks and preferences stay on your PC under `%LOCALAPPDATA%\boi_1`.
+- The overlay lives on the primary monitor and can stay visible over borderless fullscreen apps. Exclusive fullscreen apps may cover it.
+- The cat is stationary between expressions while the walk cycle is being refined.
 
-Works offline. No account, subscription, AI model, browser automation, or cloud sync is planned for v0.1.
+## Behind the project
 
-## Planning documents
+boi_1 is built in C# with Windows Forms and native layered windows. Run `./test.ps1` for the core checks. The app’s `--smoke-test` option uses sample data and exercises the timer, counter, and task controls.
 
-- [Product and design plan](docs/PLAN.md)
-- [Implementation approach](docs/TECHNICAL.md)
-- [Milestones and release checklist](docs/ROADMAP.md)
-- [Desktop-pet research and behavior specification](docs/DESKTOP-PET.md)
-- [Credits and reuse record](CREDITS.md)
+[Credits](CREDITS.md) · [Design notes](docs/DESKTOP-PET.md) · [QA notes](design-qa.md) · [Report an issue](https://github.com/SuwajAryal/boi_1/issues)
 
-Next: verify the native pet's movement and interactions on the user's desktop. The desktop automation surface could not expose a targetable boi_1 window during this build session.
-
-## Development
-
-Implemented first build: C# with Windows Forms and a native alpha-layered pet window on .NET Framework, using the compiler already installed on Windows. This replaces the original WPF/modern .NET proposal for this prototype. No installer or automatic updater is included.
-
-## Privacy and public repository
-
-This repository contains project documentation and, later, source code. Personal tasks, preferences, and timer state belong in local application data and must never be committed.
-
-## License
-
-No license has been selected yet.
+A project-wide license has yet to be selected. See the credits for third-party terms.
