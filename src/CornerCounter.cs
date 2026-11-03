@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace Boi {
@@ -13,6 +15,9 @@ namespace Boi {
   string caption="", value="";
   float progress;
   bool hovered, countUp;
+  Bitmap surface;
+  Point presentedAt;
+  bool needsPaint=true;
   Rectangle CloseArea {get{return new Rectangle(Width-34,Height/2-12,24,24);}}
 
   public CornerCounter(Pet pet) {
@@ -21,14 +26,11 @@ namespace Boi {
    FormBorderStyle=FormBorderStyle.None;
    ShowInTaskbar=false;
    TopMost=true;
-   Opacity=.50;
    StartPosition=FormStartPosition.Manual;
    AutoScaleMode=AutoScaleMode.None;
-   DoubleBuffered=true;
    Cursor=Cursors.Hand;
    using(var g=Graphics.FromHwnd(IntPtr.Zero))
     ClientSize=new Size((int)Math.Round(182*g.DpiX/96),(int)Math.Round(66*g.DpiY/96));
-   using(var outline=SoftShape.Pill(ClientRectangle)) Region=new Region(outline);
 
    actions=new ContextMenuStrip();
    actions.Items.Add("Open focus timer",null,(s,e)=>pet.OpenTools(0));
@@ -37,8 +39,8 @@ namespace Boi {
    actions.Items.Add("Hide corner bubble",null,(s,e)=>pet.HideCornerTimer());
    actions.Items.Add("Reset tally",null,(s,e)=>{pet.Data.Count=0;pet.Save();});
    ContextMenuStrip=actions;
-   MouseEnter+=(s,e)=>{hovered=true;Invalidate();};
-   MouseLeave+=(s,e)=>{hovered=false;Invalidate();};
+   MouseEnter+=(s,e)=>{hovered=true;Redraw();};
+   MouseLeave+=(s,e)=>{hovered=false;Redraw();};
    MouseClick+=(s,e)=>{
     if(e.Button!=MouseButtons.Left)return;
     if(CloseArea.Contains(e.Location))pet.HideCornerTimer();else pet.OpenTools(0);
@@ -52,47 +54,62 @@ namespace Boi {
 
   protected override bool ShowWithoutActivation { get { return true; } }
   protected override CreateParams CreateParams {
-   get { var p=base.CreateParams;p.ExStyle|=0x80|0x08000000;return p; }
+   get { var p=base.CreateParams;p.ExStyle|=0x80000|0x80|0x08000000;return p; }
   }
   protected override void WndProc(ref Message m) {
    if(m.Msg==0x21){m.Result=new IntPtr(3);return;}
    base.WndProc(ref m);
   }
 
-  protected override void OnPaint(PaintEventArgs e) {
-   var g=e.Graphics;
+  void Redraw(){
+   needsPaint=true;
+   if(Visible)Present();
+  }
+
+  void Present(){
+   if(needsPaint){
+    if(surface!=null)surface.Dispose();
+    surface=new Bitmap(Width,Height,PixelFormat.Format32bppPArgb);
+    using(var g=Graphics.FromImage(surface))PaintGlass(g);
+    needsPaint=false;
+   }
+   Native.Present(Handle,surface,Location);
+   presentedAt=Location;
+  }
+
+  void PaintGlass(Graphics g) {
    g.SmoothingMode=SmoothingMode.AntiAlias;
-   using(var glaze=new LinearGradientBrush(ClientRectangle,Color.White,Color.FromArgb(177,208,235),LinearGradientMode.Vertical)){
-    glaze.InterpolationColors=new ColorBlend {
-     Colors=new[]{Color.FromArgb(251,254,255),Color.FromArgb(227,244,255),Color.FromArgb(190,219,244),Color.FromArgb(215,236,252)},
-     Positions=new[]{0f,.35f,.49f,1f}
-    };
-    g.FillRectangle(glaze,ClientRectangle);
+   g.TextRenderingHint=TextRenderingHint.AntiAliasGridFit;
+   var bounds=new Rectangle(2,2,Width-4,Height-4);
+   using(var outline=SoftShape.Pill(bounds))
+   using(var tint=new LinearGradientBrush(bounds,Color.FromArgb(92,245,252,255),Color.FromArgb(66,160,205,239),LinearGradientMode.Vertical))
+   using(var reflection=new LinearGradientBrush(bounds,Color.White,Color.FromArgb(155,110,165,212),40f))
+   using(var rim=new Pen(reflection,2.3f)){
+    g.FillPath(tint,outline);
+    g.DrawPath(rim,outline);
    }
-   using(var edge=new Pen(Color.FromArgb(126,166,203),2))
-   using(var outline=SoftShape.Pill(new Rectangle(1,1,Width-2,Height-2)))
-    g.DrawPath(edge,outline);
-   using(var shine=new Pen(Color.FromArgb(252,255,255),2)){
-    shine.StartCap=shine.EndCap=LineCap.Round;
-    g.DrawLine(shine,Width/4,Height/9,Width*3/4,Height/9);
-   }
-   var center=TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding;
-   TextRenderer.DrawText(g,caption,heading,new Rectangle(0,Height/10,Width,Height/4),Color.FromArgb(26,47,76),center);
-   TextRenderer.DrawText(g,value,countUp?quietDigits:digits,new Rectangle(0,Height/3,Width,Height/2),Color.FromArgb(15,36,65),center);
-   if(hovered){
-    var close=CloseArea;
-    using(var fill=new SolidBrush(Color.FromArgb(232,239,248)))g.FillEllipse(fill,close);
-    TextRenderer.DrawText(g,"×",heading,close,Color.FromArgb(44,62,96),center);
+   bounds.Inflate(-3,-3);
+   using(var inner=SoftShape.Pill(bounds))
+   using(var bevel=new LinearGradientBrush(bounds,Color.FromArgb(160,255,255,255),Color.FromArgb(85,92,153,204),LinearGradientMode.Vertical))
+   using(var pen=new Pen(bevel,1.4f))g.DrawPath(pen,inner);
+   using(var center=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})
+   using(var ink=new SolidBrush(Color.FromArgb(205,15,36,65))){
+    g.DrawString(caption,heading,ink,new RectangleF(0,Height/10,Width,Height/4),center);
+    g.DrawString(value,countUp?quietDigits:digits,ink,new RectangleF(0,Height/3,Width,Height/2),center);
+    if(hovered){
+     using(var fill=new SolidBrush(Color.FromArgb(195,230,244,255)))g.FillEllipse(fill,CloseArea);
+     g.DrawString("×",heading,ink,CloseArea,center);
+    }
    }
    if(progress>0) {
     int left=Width/4, y=Height*9/10;
-    using(var pen=new Pen(Color.FromArgb(134,165,214),2))
+    using(var pen=new Pen(Color.FromArgb(170,110,155,205),2))
      g.DrawLine(pen,left,y,left+(int)(Width/2*progress),y);
    }
   }
 
   public void UpdateDisplay(Rectangle area,int eyeSeconds,bool visible) {
-   if(!visible){hovered=false;if(Visible)Hide();return;}
+   if(!visible){if(hovered)needsPaint=true;hovered=false;if(Visible)Hide();return;}
    var clock=pet.Clock;
    string nextCaption=eyeSeconds>0?"LOOK FAR AWAY":pet.CountUp?"SESSION COUNTER":clock.State==ClockState.Running?"FOCUS TIME":
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
@@ -102,15 +119,17 @@ namespace Boi {
    if(countUp!=nextCountUp||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
     countUp=nextCountUp;caption=nextCaption;value=nextValue;progress=nextProgress;
     AccessibleName=caption+" "+value;
-    Invalidate();
+    needsPaint=true;
    }
    actions.Items[1].Text="Add one to tally ("+pet.Data.Count+")";
    Location=new Point(Math.Max(area.Left,area.Right-Width-8),Math.Max(area.Top,area.Bottom-Height-8));
-   if(!Visible)Show();
+   bool showing=!Visible;
+   if(showing)Show();
+   if(showing||needsPaint||presentedAt!=Location)Present();
   }
 
   protected override void Dispose(bool disposing) {
-   if(disposing){actions.Dispose();heading.Dispose();digits.Dispose();quietDigits.Dispose();}
+   if(disposing){actions.Dispose();heading.Dispose();digits.Dispose();quietDigits.Dispose();if(surface!=null)surface.Dispose();}
    base.Dispose(disposing);
   }
  }

@@ -44,3 +44,7 @@ The owner selected the first cream-tabby cat. Its reference is assets/selected-c
 - assets/cat-walk.png: four left-facing walking frames in a 2x2 atlas.
 
 Prompt briefs: preserve the selected cream-orange tabby, brown anime eyes, soft 2D outlines and pastel shading; full body in equal atlas cells with transparent margins; no text or scenery. Runtime decoding retains alpha and discards negligible alpha noise. Source atlases remain unmodified.
+
+### Corner bubble glass
+
+[Luca Perullo’s Simple Liquid Glass](https://github.com/lucaperullo/simple-liquid-glass) informed the directional sheen and layered rim. boi_1 paints those details in C# and uses Windows per-pixel transparency for the desktop behind the bubble.
