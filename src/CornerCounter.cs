@@ -13,7 +13,6 @@ namespace Boi {
   readonly Font digits = new Font("Segoe UI",18,FontStyle.Bold);
   readonly Font quietDigits = new Font("Segoe UI",13,FontStyle.Bold);
   string caption="", value="";
-  float progress;
   bool hovered, countUp;
   Bitmap surface;
   Point presentedAt;
@@ -82,30 +81,26 @@ namespace Boi {
    g.TextRenderingHint=TextRenderingHint.AntiAliasGridFit;
    var bounds=new Rectangle(2,2,Width-4,Height-4);
    using(var outline=SoftShape.Pill(bounds))
-   using(var tint=new LinearGradientBrush(bounds,Color.FromArgb(92,245,252,255),Color.FromArgb(66,160,205,239),LinearGradientMode.Vertical))
-   using(var reflection=new LinearGradientBrush(bounds,Color.White,Color.FromArgb(155,110,165,212),40f))
-   using(var rim=new Pen(reflection,2.3f)){
+   using(var tint=new LinearGradientBrush(bounds,Color.FromArgb(65,255,255,255),Color.FromArgb(24,225,225,225),LinearGradientMode.Vertical))
+   using(var reflection=new LinearGradientBrush(bounds,Color.FromArgb(220,255,255,255),Color.FromArgb(120,96,96,96),55f))
+   using(var rim=new Pen(reflection,1.8f)){
     g.FillPath(tint,outline);
     g.DrawPath(rim,outline);
    }
    bounds.Inflate(-3,-3);
    using(var inner=SoftShape.Pill(bounds))
-   using(var bevel=new LinearGradientBrush(bounds,Color.FromArgb(160,255,255,255),Color.FromArgb(85,92,153,204),LinearGradientMode.Vertical))
-   using(var pen=new Pen(bevel,1.4f))g.DrawPath(pen,inner);
+   using(var bevel=new LinearGradientBrush(bounds,Color.FromArgb(185,255,255,255),Color.FromArgb(40,120,120,120),LinearGradientMode.Vertical))
+   using(var pen=new Pen(bevel,1f))g.DrawPath(pen,inner);
    using(var center=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})
-   using(var ink=new SolidBrush(Color.FromArgb(205,15,36,65))){
+   using(var ink=new SolidBrush(Color.FromArgb(225,30,30,30))){
     g.DrawString(caption,heading,ink,new RectangleF(0,Height/10,Width,Height/4),center);
     g.DrawString(value,countUp?quietDigits:digits,ink,new RectangleF(0,Height/3,Width,Height/2),center);
     if(hovered){
-     using(var fill=new SolidBrush(Color.FromArgb(195,230,244,255)))g.FillEllipse(fill,CloseArea);
+     using(var fill=new SolidBrush(Color.FromArgb(205,245,245,245)))g.FillEllipse(fill,CloseArea);
      g.DrawString("×",heading,ink,CloseArea,center);
     }
    }
-   if(progress>0) {
-    int left=Width/4, y=Height*9/10;
-    using(var pen=new Pen(Color.FromArgb(170,110,155,205),2))
-     g.DrawLine(pen,left,y,left+(int)(Width/2*progress),y);
-   }
+
   }
 
   public void UpdateDisplay(Rectangle area,int eyeSeconds,bool visible) {
@@ -115,9 +110,8 @@ namespace Boi {
     clock.State==ClockState.Paused?"ON A BREAK":clock.State==ClockState.Finished?"SESSION COMPLETE":"START FOCUS";
    bool nextCountUp=eyeSeconds==0&&pet.CountUp;
    string nextValue=eyeSeconds>0?eyeSeconds+"s":pet.CountUp?pet.SessionDisplay:clock.Display;
-   float nextProgress=eyeSeconds>0?eyeSeconds/20f:pet.CountUp?0:(float)Math.Max(0,Math.Min(1,clock.Remaining/(clock.Minutes*60)));
-   if(countUp!=nextCountUp||caption!=nextCaption||value!=nextValue||Math.Abs(progress-nextProgress)>.005f) {
-    countUp=nextCountUp;caption=nextCaption;value=nextValue;progress=nextProgress;
+   if(countUp!=nextCountUp||caption!=nextCaption||value!=nextValue) {
+    countUp=nextCountUp;caption=nextCaption;value=nextValue;
     AccessibleName=caption+" "+value;
     needsPaint=true;
    }
